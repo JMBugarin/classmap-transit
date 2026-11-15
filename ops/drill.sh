@@ -2,6 +2,7 @@
 # Local deploy/rollback/backup/restore drill in an isolated compose project.
 set -euo pipefail
 cd "$(dirname "$0")/.."
+. ops/lib.sh
 old=${1:?usage: drill.sh <old image tag> <new image tag>}
 new=${2:?usage: drill.sh <old image tag> <new image tag>}
 export COMPOSE_PROJECT_NAME=${COMPOSE_PROJECT_NAME:-transit-drill} API_PORT=${API_PORT:-18181}
@@ -35,7 +36,7 @@ after=$(curl -sf "$api/v1/feed-status"); echo "feed-status-after-rollback $after
 mkdir -p "$BACKUP_DIR"
 ops/reconcile.sh transit > "$BACKUP_DIR.source.txt"
 t=$(ms); dump=$(ops/backup.sh); echo "backup-ms $(( $(ms) - t )) $dump $(wc -c < "$dump") bytes"
-docker compose exec -T db dropdb -U postgres --if-exists transit_restore
+dc exec -T db dropdb -U postgres --if-exists transit_restore
 t=$(ms); ops/restore.sh "$dump" transit_restore; echo "restore-ms $(( $(ms) - t ))"
 ops/reconcile.sh transit_restore > "$BACKUP_DIR.restored.txt"
 if diff "$BACKUP_DIR.source.txt" "$BACKUP_DIR.restored.txt"; then echo "reconcile identical"; else echo "reconcile DIFFERS" >&2; exit 1; fi
