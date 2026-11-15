@@ -6,3 +6,5 @@ web/dist/
 web/test-results/
 web/playwright-report/
 bench/raw/*/transit
+/backups/
+/.deploy/

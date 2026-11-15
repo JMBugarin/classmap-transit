@@ -269,3 +269,47 @@ func TestDifferentialRejected(t *testing.T) {
 		t.Fatal(e)
 	}
 }
+func TestPruneKeepsPublishedAndUnfinished(t *testing.T) {
+	s, ns := setup(t)
+	ctx := context.Background()
+	old := time.Now().Add(-240 * time.Hour)
+	s.Now = func() time.Time { return old }
+	superseded := process(t, s, ns, capture(uint64(old.Unix()), "a"))
+	current := process(t, s, ns, capture(uint64(old.Unix()+1), "b"))
+	refetched := process(t, s, ns, capture(uint64(old.Unix()-5), "d"))
+	if _, e := s.Accept(ctx, ns, "trips", "", capture(uint64(old.Unix()-5), "d"), time.Now()); e != nil {
+		t.Fatal(e)
+	}
+	pending, e := s.Accept(ctx, ns, "trips", "", capture(uint64(old.Unix()+2), "c"), old)
+	if e != nil {
+		t.Fatal(e)
+	}
+	if _, e = s.Prune(ctx, time.Now().Add(-168*time.Hour), 0); e == nil {
+		t.Fatal("accepted zero batch")
+	}
+	if _, e = s.Prune(ctx, time.Now().Add(-168*time.Hour), 1); e != nil {
+		t.Fatal(e)
+	}
+	left := map[int64]bool{}
+	rows, e := s.DB.Query(ctx, "SELECT id FROM captures WHERE ns=$1", ns)
+	if e != nil {
+		t.Fatal(e)
+	}
+	for rows.Next() {
+		var id int64
+		_ = rows.Scan(&id)
+		left[id] = true
+	}
+	if left[superseded] || !left[current] || !left[pending] || !left[refetched] {
+		t.Fatalf("left %v superseded %d current %d pending %d refetched %d", left, superseded, current, pending, refetched)
+	}
+	var n int
+	for _, q := range []string{"observations WHERE generation", "outcomes WHERE capture", "jobs WHERE capture", "fetches WHERE capture"} {
+		if e = s.DB.QueryRow(ctx, "SELECT count(*) FROM "+q+"=$1", superseded).Scan(&n); e != nil || n != 0 {
+			t.Fatal(q, n, e)
+		}
+	}
+	if e = s.DB.QueryRow(ctx, "SELECT count(*) FROM observations WHERE generation=$1", current).Scan(&n); e != nil || n != 1 {
+		t.Fatal("current observations", n, e)
+	}
+}
