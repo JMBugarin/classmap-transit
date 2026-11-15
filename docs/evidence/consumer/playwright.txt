@@ -1,0 +1,15 @@
+
+> classmap-transit-operator@0.1.0 e2e
+> playwright test
+
+
+Running 6 tests using 1 worker
+
+  ✓  1 e2e/status.spec.ts:7:3 › shows fresh (250ms)
+  ✓  2 e2e/status.spec.ts:7:3 › shows stale (186ms)
+  ✓  3 e2e/status.spec.ts:7:3 › shows unavailable (195ms)
+  ✓  4 e2e/status.spec.ts:15:1 › scheduled fallback is labeled (201ms)
+  ✓  5 e2e/status.spec.ts:23:1 › outage is explicit (179ms)
+  ✓  6 e2e/status.spec.ts:31:1 › operator counts render (179ms)
+
+  6 passed (2.2s)

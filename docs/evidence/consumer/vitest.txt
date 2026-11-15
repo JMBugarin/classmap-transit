@@ -1,0 +1,13 @@
+
+> classmap-transit-operator@0.1.0 test
+> vitest run
+
+
+ RUN  v5.0.5 /Users/josh/Developer/my-workspace/personal/classmap-transit/web
+
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  20:15:40
+   Duration  116ms (transform 57%, import 20%, tests 15%, worker 8%)
+
