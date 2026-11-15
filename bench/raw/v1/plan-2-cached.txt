@@ -1,0 +1,18 @@
+Limit  (cost=2.10..7.77 rows=20 width=30) (actual time=0.139..0.148 rows=20 loops=1)
+  Buffers: shared hit=30 read=3
+  InitPlan 1
+    ->  Seq Scan on feed_state  (cost=0.00..1.01 rows=1 width=8) (actual time=0.006..0.006 rows=1 loops=1)
+          Filter: (ns = 'live'::text)
+          Buffers: shared hit=1
+  ->  Incremental Sort  (cost=1.09..53398.18 rows=188367 width=30) (actual time=0.139..0.140 rows=20 loops=1)
+        Sort Key: observations.predicted, observations.trip
+        Presorted Key: observations.predicted
+        Full-sort Groups: 1  Sort Method: quicksort  Average Memory: 26kB  Peak Memory: 26kB
+        Buffers: shared hit=30 read=3
+        ->  Index Scan using observations_stop on observations  (cost=0.42..48292.46 rows=188367 width=30) (actual time=0.036..0.115 rows=23 loops=1)
+              Index Cond: ((stop = 'S0000'::text) AND (generation = (InitPlan 1).col1))
+              Buffers: shared hit=24 read=3
+Planning:
+  Buffers: shared hit=146 read=1
+Planning Time: 0.273 ms
+Execution Time: 0.165 ms

@@ -187,3 +187,10 @@ func FuzzParseTime(f *testing.F) {
 		}
 	})
 }
+
+func TestSeedBenchRefusesNonBenchDatabase(t *testing.T) {
+	s, _ := setup(t)
+	if _, e := s.SeedBench(context.Background(), 10, 1, time.Now()); e == nil || !strings.Contains(e.Error(), "_bench") {
+		t.Fatal(e)
+	}
+}

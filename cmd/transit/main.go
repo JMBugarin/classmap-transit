@@ -23,8 +23,10 @@ func main() {
 		log.Fatal(e)
 	}
 	defer s.DB.Close()
-	if e = s.Migrate(ctx); e != nil {
-		log.Fatal(e)
+	if os.Getenv("SKIP_MIGRATE") != "1" {
+		if e = s.Migrate(ctx); e != nil {
+			log.Fatal(e)
+		}
 	}
 	if len(os.Args) > 1 {
 		switch os.Args[1] {
@@ -45,6 +47,21 @@ func main() {
 				log.Fatal(e)
 			}
 			id, e := s.Accept(ctx, "live", "trips", os.Getenv("SCHEDULE_VERSION"), b, time.Now())
+			if e != nil {
+				log.Fatal(e)
+			}
+			fmt.Println(id)
+			return
+		case "bench-seed":
+			n, e := strconv.Atoi(envOr("BENCH_ROWS", "1000000"))
+			if e != nil || n < 1 || n > 10_000_000 {
+				log.Fatal("BENCH_ROWS must be 1..10000000")
+			}
+			seed, e := strconv.ParseUint(envOr("BENCH_SEED", "20261115"), 10, 64)
+			if e != nil {
+				log.Fatal(e)
+			}
+			id, e := s.SeedBench(ctx, n, seed, time.Now())
 			if e != nil {
 				log.Fatal(e)
 			}

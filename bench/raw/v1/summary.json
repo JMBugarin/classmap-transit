@@ -1,0 +1,299 @@
+[
+  {
+    "rep": 0,
+    "variant": "uncached",
+    "requests": 56228,
+    "achieved_rps": 92.96051522120642,
+    "error_rate": 0.4519456498541652,
+    "dropped": 3773,
+    "all_p95": 5000.93,
+    "plan_scan": [
+      "Bitmap Index Scan on feed_state_pkey",
+      "Parallel Seq Scan on observations"
+    ],
+    "plan_ms": 29.126,
+    "aborted": false,
+    "departures": {
+      "med": 5000.209,
+      "p(95)": 5001.11025,
+      "p(99)": 5001.93785,
+      "max": 5002.652
+    },
+    "feed_status": {
+      "med": 2379.3705,
+      "p(95)": 2709.35715,
+      "p(99)": 2851.27807,
+      "max": 3150.023
+    },
+    "observations": {
+      "med": 2380.1255,
+      "p(95)": 2711.90175,
+      "p(99)": 2858.18941,
+      "max": 3145.608
+    }
+  },
+  {
+    "rep": 0,
+    "variant": "indexed",
+    "requests": 60001,
+    "achieved_rps": 100.00107566030951,
+    "error_rate": 0,
+    "dropped": 0,
+    "all_p95": 2.526,
+    "plan_scan": [
+      "Index Scan using observations_stop",
+      "Seq Scan on feed_state"
+    ],
+    "plan_ms": 0.144,
+    "aborted": false,
+    "departures": {
+      "med": 2.019,
+      "p(95)": 2.617,
+      "p(99)": 3.123999999999999,
+      "max": 31.761
+    },
+    "feed_status": {
+      "med": 0.824,
+      "p(95)": 1.1980999999999988,
+      "p(99)": 1.5268299999999997,
+      "max": 6.841
+    },
+    "observations": {
+      "med": 0.848,
+      "p(95)": 1.205,
+      "p(99)": 1.55191,
+      "max": 7.514
+    }
+  },
+  {
+    "rep": 0,
+    "variant": "cached",
+    "requests": 60000,
+    "achieved_rps": 99.99954566873083,
+    "error_rate": 0,
+    "dropped": 0,
+    "all_p95": 2.275,
+    "plan_scan": [
+      "Index Scan using observations_stop",
+      "Seq Scan on feed_state"
+    ],
+    "plan_ms": 0.137,
+    "aborted": false,
+    "departures": {
+      "med": 1.525,
+      "p(95)": 2.359,
+      "p(99)": 2.7410199999999993,
+      "max": 9.489
+    },
+    "feed_status": {
+      "med": 0.853,
+      "p(95)": 1.2130499999999995,
+      "p(99)": 1.554,
+      "max": 7.145
+    },
+    "observations": {
+      "med": 0.884,
+      "p(95)": 1.244,
+      "p(99)": 1.60582,
+      "max": 5.803
+    }
+  },
+  {
+    "rep": 1,
+    "variant": "uncached",
+    "requests": 56115,
+    "achieved_rps": 92.78286650009798,
+    "error_rate": 0.5590127416911699,
+    "dropped": 3885,
+    "all_p95": 5001.396,
+    "plan_scan": [
+      "Parallel Seq Scan on observations",
+      "Seq Scan on feed_state"
+    ],
+    "plan_ms": 27.216,
+    "aborted": false,
+    "departures": {
+      "med": 5000.284,
+      "p(95)": 5001.629,
+      "p(99)": 5002.21267,
+      "max": 5005.949
+    },
+    "feed_status": {
+      "med": 2358.048,
+      "p(95)": 2756.1458,
+      "p(99)": 2915.94392,
+      "max": 3263.799
+    },
+    "observations": {
+      "med": 2362.0460000000003,
+      "p(95)": 2753.74595,
+      "p(99)": 2905.37991,
+      "max": 3226.492
+    }
+  },
+  {
+    "rep": 1,
+    "variant": "indexed",
+    "requests": 60001,
+    "achieved_rps": 100.00085565972726,
+    "error_rate": 0,
+    "dropped": 0,
+    "all_p95": 2.608,
+    "plan_scan": [
+      "Index Scan using observations_stop",
+      "Seq Scan on feed_state"
+    ],
+    "plan_ms": 0.154,
+    "aborted": false,
+    "departures": {
+      "med": 2.077,
+      "p(95)": 2.7154999999999982,
+      "p(99)": 3.1984999999999997,
+      "max": 22.253
+    },
+    "feed_status": {
+      "med": 0.826,
+      "p(95)": 1.244,
+      "p(99)": 1.594,
+      "max": 7.488
+    },
+    "observations": {
+      "med": 0.847,
+      "p(95)": 1.2555499999999997,
+      "p(99)": 1.627,
+      "max": 6.427
+    }
+  },
+  {
+    "rep": 1,
+    "variant": "cached",
+    "requests": 60000,
+    "achieved_rps": 99.99959216832994,
+    "error_rate": 0,
+    "dropped": 0,
+    "all_p95": 2.304,
+    "plan_scan": [
+      "Index Scan using observations_stop",
+      "Seq Scan on feed_state"
+    ],
+    "plan_ms": 0.135,
+    "aborted": false,
+    "departures": {
+      "med": 1.511,
+      "p(95)": 2.374,
+      "p(99)": 2.70951,
+      "max": 12.116
+    },
+    "feed_status": {
+      "med": 0.839,
+      "p(95)": 1.1650499999999995,
+      "p(99)": 1.586,
+      "max": 8.366
+    },
+    "observations": {
+      "med": 0.869,
+      "p(95)": 1.1765499999999998,
+      "p(99)": 1.538,
+      "max": 5.669
+    }
+  },
+  {
+    "rep": 2,
+    "variant": "uncached",
+    "requests": 56191,
+    "achieved_rps": 92.90506776121913,
+    "error_rate": 0.5822106743072734,
+    "dropped": 3810,
+    "all_p95": 5001.4394999999995,
+    "plan_scan": [
+      "Parallel Seq Scan on observations",
+      "Seq Scan on feed_state"
+    ],
+    "plan_ms": 26.966,
+    "aborted": false,
+    "departures": {
+      "med": 5000.285,
+      "p(95)": 5001.6597,
+      "p(99)": 5002.206,
+      "max": 5002.826
+    },
+    "feed_status": {
+      "med": 2356.255,
+      "p(95)": 2694.5083999999997,
+      "p(99)": 2828.0904800000003,
+      "max": 3085.711
+    },
+    "observations": {
+      "med": 2352.329,
+      "p(95)": 2686.3163999999997,
+      "p(99)": 2822.4293199999997,
+      "max": 3108.022
+    }
+  },
+  {
+    "rep": 2,
+    "variant": "indexed",
+    "requests": 60001,
+    "achieved_rps": 100.0008273263893,
+    "error_rate": 0,
+    "dropped": 0,
+    "all_p95": 2.501,
+    "plan_scan": [
+      "Index Scan using observations_stop",
+      "Seq Scan on feed_state"
+    ],
+    "plan_ms": 0.142,
+    "aborted": false,
+    "departures": {
+      "med": 2.08,
+      "p(95)": 2.574,
+      "p(99)": 3.002,
+      "max": 7.696
+    },
+    "feed_status": {
+      "med": 0.812,
+      "p(95)": 1.132,
+      "p(99)": 1.4174399999999996,
+      "max": 6.691
+    },
+    "observations": {
+      "med": 0.809,
+      "p(95)": 1.1215499999999998,
+      "p(99)": 1.4516399999999998,
+      "max": 4.829
+    }
+  },
+  {
+    "rep": 2,
+    "variant": "cached",
+    "requests": 60001,
+    "achieved_rps": 100.00106466025741,
+    "error_rate": 0,
+    "dropped": 0,
+    "all_p95": 2.56,
+    "plan_scan": [
+      "Index Scan using observations_stop",
+      "Seq Scan on feed_state"
+    ],
+    "plan_ms": 0.165,
+    "aborted": false,
+    "departures": {
+      "med": 1.63,
+      "p(95)": 2.708,
+      "p(99)": 3.3074999999999997,
+      "max": 12.975
+    },
+    "feed_status": {
+      "med": 0.879,
+      "p(95)": 1.474,
+      "p(99)": 1.8308299999999997,
+      "max": 5.527
+    },
+    "observations": {
+      "med": 0.879,
+      "p(95)": 1.4525499999999998,
+      "p(99)": 1.7725499999999996,
+      "max": 6.581
+    }
+  }
+]
