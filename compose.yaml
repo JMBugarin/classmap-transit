@@ -1,0 +1,23 @@
+services:
+  db:
+    image: postgres:17.12
+    environment:
+      POSTGRES_DB: transit
+      POSTGRES_PASSWORD: local-dev-only
+    volumes: ["pgdata:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d transit"]
+      interval: 2s
+      retries: 30
+  api:
+    build: .
+    environment:
+      DATABASE_URL: postgres://postgres:local-dev-only@db/transit?sslmode=disable
+      LISTEN_ADDR: 0.0.0.0:8080
+      RESPONSE_CACHE: "1"
+    ports: ["127.0.0.1:8080:8080"]
+    depends_on:
+      db:
+        condition: service_healthy
+volumes:
+  pgdata:

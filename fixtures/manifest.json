@@ -1,0 +1,22 @@
+{
+  "captures": [
+    {
+      "path": "metro-trips.pb",
+      "url": "https://rt.scmetro.org/gtfsrt/trips",
+      "sha256": "c0a8cb90009c8fabb9420cde4fda67fb04e6b39f3ab21b6e0a4d127d7a426600",
+      "bytes": 61002,
+      "file_completed_utc": "2026-11-15T03:09:38.776677+00:00",
+      "headers": "HTTP/2 200 \ndate: Sun, 15 Nov 2026 03:09:38 GMT\ncontent-type: application/x-google-protobuf\nnel: {\"report_to\":\"cf-nel\",\"success_fraction\":0.0,\"max_age\":604800}\nreport-to: {\"group\":\"cf-nel\",\"max_age\":604800,\"endpoints\":[{\"url\":\"https://a.nel.cloudflare.com/report/v4?s=E%2Fd2r0W6GW%2FEC7lL%2BnucvZgIfwiAU6RNiGHr4ZLAkZFkg3ax3hPkwp5M3OC46D4lcxbIZUn2U0m2wPhuaXLDJSywhEzzVM5j3m9M5u9x9X1GQ0aMQUL8s7v46BRLXUNDHHxlttAs7qTVRRvRfQ%3D%3D\"}]}\ncf-cache-status: DYNAMIC\nserver: cloudflare\ncf-ray: a5ab0eec2b2267a7-SJC\nalt-svc: h3=\":443\"; ma=86400\n\n"
+    },
+    {
+      "path": "metro-static.zip",
+      "url": "https://developer.scmetro.org/gtfs.zip",
+      "sha256": "8f44814c50c2962a199817ce61944fd51484628108d8130e2f00791776d5c4ff",
+      "bytes": 4310623,
+      "file_completed_utc": "2026-11-15T03:09:39.094630+00:00",
+      "headers": "HTTP/2 200 \ndate: Sun, 15 Nov 2026 03:09:38 GMT\ncontent-type: application/zip\ncontent-length: 4310623\nserver: cloudflare\ncf-cache-status: DYNAMIC\nreport-to: {\"group\":\"cf-nel\",\"max_age\":604800,\"endpoints\":[{\"url\":\"https://a.nel.cloudflare.com/report/v4?s=Efr4fUEVSQoe4eqeckKItuEaP0%2Flz%2F%2Fp8N43Hky1RxGatQ3eynONJy68il%2FcAbdJd587ifKgNXhGiPH8ORCKaV2z5mP%2FCRDyMOKmRgYiZ5yxALudG3ocuzMLELbvTzEfsQyiHoMyGPAW%2FjgIPggCMDNPxkw%3D\"}]}\nnel: {\"report_to\":\"cf-nel\",\"success_fraction\":0.0,\"max_age\":604800}\ncf-ray: a5ab0eee29ebf555-SJC\nalt-svc: h3=\":443\"; ma=86400\n\n"
+    }
+  ],
+  "attribution": "Santa Cruz METRO / SCMTD, CC BY 4.0 and developer agreement at https://developer.scmetro.org/ . Unmodified raw data. No endorsement.",
+  "fetch_notes": "Initial urllib GET failed HTTP 403. Subsequent curl GET returned 200 for each source. No polling/load tests against upstream."
+}
