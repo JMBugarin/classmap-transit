@@ -3,3 +3,5 @@ web/dist/
 .env
 *.log
 /transit
+web/test-results/
+web/playwright-report/
