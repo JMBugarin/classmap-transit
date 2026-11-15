@@ -5,3 +5,4 @@ web/dist/
 /transit
 web/test-results/
 web/playwright-report/
+bench/raw/*/transit
