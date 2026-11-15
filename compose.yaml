@@ -1,9 +1,10 @@
 services:
   db:
     image: postgres:17.12
+    restart: unless-stopped
     environment:
       POSTGRES_DB: transit
-      POSTGRES_PASSWORD: local-dev-only
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-local-dev-only}
     volumes: ["pgdata:/var/lib/postgresql/data"]
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d transit"]
@@ -11,11 +12,17 @@ services:
       retries: 30
   api:
     build: .
+    image: classmap-transit:${TAG:-dev}
+    restart: unless-stopped
     environment:
-      DATABASE_URL: postgres://postgres:local-dev-only@db/transit?sslmode=disable
+      DATABASE_URL: postgres://postgres:${POSTGRES_PASSWORD:-local-dev-only}@db/transit?sslmode=disable
       LISTEN_ADDR: 0.0.0.0:8080
       RESPONSE_CACHE: "1"
-    ports: ["127.0.0.1:8080:8080"]
+      POLL_URL: ${POLL_URL:-}
+      SCHEDULE_VERSION: ${SCHEDULE_VERSION:-}
+      ADMIN_TOKEN: ${ADMIN_TOKEN:-}
+      ALLOWED_ORIGIN: ${ALLOWED_ORIGIN:-}
+    ports: ["127.0.0.1:${API_PORT:-8080}:8080"]
     depends_on:
       db:
         condition: service_healthy
