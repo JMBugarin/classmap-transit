@@ -1,0 +1,5 @@
+$ docker run classmap-transit:837e1b6 prune (RETAIN=1h, drill database)
+0
+$ RETAIN=10m
+2026/11/15 09:20:45 RETAIN must be at least 1h
+exit 1

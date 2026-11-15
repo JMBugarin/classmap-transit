@@ -1,0 +1,58 @@
+2026-11-15T09:20:24Z drill start old=10e37d2 new=837e1b6
+ Network transit-drill_default Creating 
+ Volume transit-drill_pgdata Creating 
+ Volume transit-drill_pgdata Created 
+ Network transit-drill_default Created 
+ Container transit-drill-db-1 Creating 
+ Container transit-drill-db-1 Created 
+ Container transit-drill-api-1 Creating 
+ Container transit-drill-api-1 Created 
+ Container transit-drill-db-1 Starting 
+ Container transit-drill-db-1 Started 
+ Container transit-drill-db-1 Waiting 
+ Container transit-drill-db-1 Healthy 
+ Container transit-drill-api-1 Starting 
+ Container transit-drill-api-1 Started 
+deployed 10e37d2
+schedule 8f44814c50c2962a199817ce61944fd51484628108d8130e2f00791776d5c4ff
+1
+feed-status {"generation":1,"source_time":1794712157,"fetched_at":"2026-11-15T09:20:30.798366Z","processed_at":"2026-11-15T09:20:30.866281Z","freshness":"stale"}
+{"status":{"generation":1,"source_time":1794712157,"fetched_at":"2026-11-15T09:20:30.798366Z","processed_at":"2026-11-15T09:20:30.866281Z","freshness":"stale"},"jobs":{"done":1},"outcomes":{"published":1},"schedule":"8f44814c50c2962a199817ce61944fd51484628108d8130e2f00791776d5c4ff"}
+
+ Container transit-drill-db-1 Running 
+ Container transit-drill-api-1 Recreate 
+ Container transit-drill-api-1 Recreated 
+ Container transit-drill-db-1 Waiting 
+ Container transit-drill-db-1 Healthy 
+ Container transit-drill-api-1 Starting 
+ Container transit-drill-api-1 Started 
+deployed 837e1b6
+deploy-new-ms 338
+{"generation":1,"source_time":1794712157,"fetched_at":"2026-11-15T09:20:30.798366Z","processed_at":"2026-11-15T09:20:30.866281Z","freshness":"stale"}
+
+ Container transit-drill-db-1 Running 
+ Container transit-drill-api-1 Recreate 
+ Container transit-drill-api-1 Recreated 
+ Container transit-drill-db-1 Waiting 
+ Container transit-drill-db-1 Healthy 
+ Container transit-drill-api-1 Starting 
+ Container transit-drill-api-1 Started 
+deployed 10e37d2
+rollback-ms 587
+feed-status-after-rollback {"generation":1,"source_time":1794712157,"fetched_at":"2026-11-15T09:20:30.798366Z","processed_at":"2026-11-15T09:20:30.866281Z","freshness":"stale"}
+backup-ms 885 backups/drill/transit-20261115T092032Z.dump  6479302 bytes
+NOTICE:  database "transit_restore" does not exist, skipping
+backups/drill/transit-20261115T092032Z.dump: OK
+restore-ms 1131
+reconcile identical
+schema_versions 1 1
+schedules 1 8f44814c50c2962a199817ce61944fd51484628108d8130e2f00791776d5c4ff
+stop_times 235038 
+captures 1 ef87d1272857cbacd2cf5b8c46127f17
+fetches 1 1
+jobs 1 c23067e6aaf730dff9db18189cbabfab
+outcomes 1 7387ee4d67dc47073d456b385c00b2f9
+observations 45 2da44564a16161de22f0ddd984662b56
+feed_state 1 live/trips=1
+restored-api-feed-status {"generation":1,"source_time":1794712157,"fetched_at":"2026-11-15T09:20:30.798366Z","processed_at":"2026-11-15T09:20:30.866281Z","freshness":"stale"}
+2026-11-15T09:20:34Z drill done
