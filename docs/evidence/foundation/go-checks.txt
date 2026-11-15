@@ -1,0 +1,27 @@
+go version go1.27.4 darwin/arm64
+gofmt ok
+vet ok
+--- PASS: TestOpenAPIMatchesRoutes (0.00s)
+--- PASS: TestFetchBounds (0.03s)
+--- PASS: TestPollAcceptsCapture (0.07s)
+--- PASS: TestPredictionFreshnessUsesFeedTimeWithoutEventTime (0.04s)
+    service_test.go:151: import 8f44814c50c2 in 2.381488667s
+--- PASS: TestImportRealMetroSchedule (4.89s)
+--- PASS: TestPublicationOrderingAndReplacement (0.05s)
+--- PASS: TestDuplicateAcceptanceAndConstraints (0.02s)
+--- PASS: TestLeaseFence (0.03s)
+--- PASS: TestQuarantine (0.03s)
+--- PASS: TestReplayDeterministicAndIsolated (0.04s)
+--- PASS: TestFreshnessClockAndBounds (0.00s)
+--- PASS: TestServiceDateDST (0.00s)
+--- PASS: TestHTTPBoundsAndAuth (0.01s)
+--- PASS: TestWarmCacheFreshness (0.08s)
+--- PASS: TestDifferentialRejected (0.00s)
+--- PASS: FuzzParseTime (0.00s)
+--- PASS: FuzzDecode (0.00s)
+ok  	github.com/JMBugarin/classmap-transit/internal/transit	6.741s
+PASS
+ok  	github.com/JMBugarin/classmap-transit/internal/transit	31.486s
+PASS
+ok  	github.com/JMBugarin/classmap-transit/internal/transit	30.740s
+build ok

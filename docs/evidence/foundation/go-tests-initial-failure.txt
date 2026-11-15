@@ -1,0 +1,14 @@
+?   	github.com/JMBugarin/classmap-transit/cmd/transit	[no test files]
+--- FAIL: TestPublicationOrderingAndReplacement (0.04s)
+    store_test.go:60: ERROR: column "lease_until" is of type timestamp with time zone but expression is of type interval (SQLSTATE 42804)
+--- FAIL: TestLeaseFence (0.03s)
+    store_test.go:113: ERROR: column "lease_until" is of type timestamp with time zone but expression is of type interval (SQLSTATE 42804)
+--- FAIL: TestQuarantine (0.03s)
+    store_test.go:136: ERROR: column "lease_until" is of type timestamp with time zone but expression is of type interval (SQLSTATE 42804)
+--- FAIL: TestReplayDeterministicAndIsolated (0.03s)
+    store_test.go:148: ERROR: column "lease_until" is of type timestamp with time zone but expression is of type interval (SQLSTATE 42804)
+--- FAIL: TestWarmCacheFreshness (0.03s)
+    store_test.go:216: ERROR: column "lease_until" is of type timestamp with time zone but expression is of type interval (SQLSTATE 42804)
+FAIL
+FAIL	github.com/JMBugarin/classmap-transit/internal/transit	0.694s
+FAIL

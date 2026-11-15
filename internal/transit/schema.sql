@@ -1,0 +1,18 @@
+CREATE TABLE IF NOT EXISTS schema_versions(version integer PRIMARY KEY);
+CREATE TABLE IF NOT EXISTS schedules(id text PRIMARY KEY, timezone text NOT NULL, raw bytea NOT NULL, imported_at timestamptz NOT NULL DEFAULT now());
+CREATE TABLE IF NOT EXISTS routes(version text REFERENCES schedules(id), id text, name text NOT NULL, PRIMARY KEY(version,id));
+CREATE TABLE IF NOT EXISTS stops(version text REFERENCES schedules(id), id text, name text NOT NULL, PRIMARY KEY(version,id));
+CREATE TABLE IF NOT EXISTS calendars(version text REFERENCES schedules(id), id text, start_date date NOT NULL, end_date date NOT NULL, weekdays boolean[] NOT NULL CHECK(array_length(weekdays,1)=7), PRIMARY KEY(version,id), CHECK(end_date>=start_date));
+CREATE TABLE IF NOT EXISTS calendar_dates(version text, service text, date date, added boolean NOT NULL, PRIMARY KEY(version,service,date), FOREIGN KEY(version,service) REFERENCES calendars(version,id));
+CREATE TABLE IF NOT EXISTS trips(version text, id text, route text NOT NULL, service text NOT NULL, PRIMARY KEY(version,id), FOREIGN KEY(version,route) REFERENCES routes(version,id), FOREIGN KEY(version,service) REFERENCES calendars(version,id));
+CREATE TABLE IF NOT EXISTS stop_times(version text, trip text, stop text NOT NULL, sequence integer CHECK(sequence>=0), departure integer NOT NULL CHECK(departure>=0 AND departure<604800), PRIMARY KEY(version,trip,sequence), FOREIGN KEY(version,trip) REFERENCES trips(version,id), FOREIGN KEY(version,stop) REFERENCES stops(version,id));
+CREATE TABLE IF NOT EXISTS captures(id bigserial PRIMARY KEY, ns text NOT NULL, feed text NOT NULL, hash text NOT NULL, raw bytea NOT NULL, source_time bigint, fetched_at timestamptz NOT NULL, schedule text REFERENCES schedules(id), decoder text NOT NULL DEFAULT 'gtfs-bindings-v1.0.0', UNIQUE(ns,feed,hash));
+CREATE TABLE IF NOT EXISTS fetches(id bigserial PRIMARY KEY,capture bigint NOT NULL REFERENCES captures(id), fetched_at timestamptz NOT NULL);
+CREATE TABLE IF NOT EXISTS jobs(id bigserial PRIMARY KEY,capture bigint NOT NULL UNIQUE REFERENCES captures(id),state text NOT NULL DEFAULT 'pending' CHECK(state IN ('pending','running','done','failed','quarantined')), token bigint NOT NULL DEFAULT 0, attempts integer NOT NULL DEFAULT 0, lease_until timestamptz, available_at timestamptz NOT NULL DEFAULT now(), error text);
+CREATE TABLE IF NOT EXISTS feed_state(ns text,feed text,generation bigint REFERENCES captures(id),source_time bigint,hash text, PRIMARY KEY(ns,feed));
+CREATE TABLE IF NOT EXISTS observations(generation bigint REFERENCES captures(id),entity text,sequence integer,trip text NOT NULL,stop text NOT NULL,predicted bigint,event_time bigint,PRIMARY KEY(generation,entity,sequence));
+CREATE TABLE IF NOT EXISTS outcomes(capture bigint PRIMARY KEY REFERENCES captures(id),outcome text NOT NULL,processed_at timestamptz NOT NULL);
+CREATE INDEX IF NOT EXISTS observations_stop ON observations(stop,predicted,generation);
+CREATE INDEX IF NOT EXISTS captures_history ON captures(ns,fetched_at,id);
+CREATE INDEX IF NOT EXISTS job_claim ON jobs(state,available_at,lease_until);
+INSERT INTO schema_versions VALUES(1) ON CONFLICT DO NOTHING;

@@ -1,0 +1,115 @@
+openapi: 3.1.0
+info:
+  title: Classmap Transit
+  version: 0.1.0
+  description: Versioned Santa Cruz METRO departures with explicit freshness. Data from Santa Cruz METRO (CC BY 4.0); no endorsement. A missing prediction does not mean a cancellation.
+servers:
+  - url: http://127.0.0.1:8080
+paths:
+  /healthz:
+    get:
+      operationId: health
+      responses:
+        "200": { description: Process is up, content: { application/json: { schema: { $ref: "#/components/schemas/Health" } } } }
+  /readyz:
+    get:
+      operationId: ready
+      responses:
+        "200": { description: Database reachable, content: { application/json: { schema: { $ref: "#/components/schemas/Health" } } } }
+        "503": { $ref: "#/components/responses/Error" }
+  /v1/feed-status:
+    get:
+      operationId: feedStatus
+      responses:
+        "200": { description: Published generation and freshness, content: { application/json: { schema: { $ref: "#/components/schemas/Status" } } } }
+        "503": { $ref: "#/components/responses/Error" }
+  /v1/departures:
+    get:
+      operationId: departures
+      parameters:
+        - { name: stop, in: query, required: true, schema: { type: string, minLength: 1, maxLength: 128 } }
+        - { $ref: "#/components/parameters/Limit" }
+      responses:
+        "200": { description: Upcoming departures. Freshness is recomputed per response, including cache hits; scheduled fallback when predictions are missing or not fresh., content: { application/json: { schema: { $ref: "#/components/schemas/Departures" } } } }
+        "400": { $ref: "#/components/responses/Error" }
+        "503": { $ref: "#/components/responses/Error" }
+  /v1/observations:
+    get:
+      operationId: observations
+      description: Captures fetched in the last hour, keyset paginated by id.
+      parameters:
+        - { name: after, in: query, schema: { type: integer, format: int64, minimum: 0 } }
+        - { $ref: "#/components/parameters/Limit" }
+      responses:
+        "200": { description: Capture page, content: { application/json: { schema: { type: array, items: { $ref: "#/components/schemas/Capture" } } } } }
+        "400": { $ref: "#/components/responses/Error" }
+        "503": { $ref: "#/components/responses/Error" }
+  /v1/ops:
+    get:
+      operationId: ops
+      responses:
+        "200": { description: Operator summary, content: { application/json: { schema: { $ref: "#/components/schemas/Ops" } } } }
+        "503": { $ref: "#/components/responses/Error" }
+  /v1/admin/requeue:
+    post:
+      operationId: requeue
+      security: [{ bearer: [] }]
+      parameters:
+        - { name: id, in: query, required: true, schema: { type: integer, format: int64 } }
+      responses:
+        "200": { description: Failed job returned to pending, content: { application/json: { schema: { type: object, required: [requeued], properties: { requeued: { type: integer } } } } } }
+        "400": { $ref: "#/components/responses/Error" }
+        "401": { $ref: "#/components/responses/Error" }
+        "503": { $ref: "#/components/responses/Error" }
+components:
+  securitySchemes:
+    bearer: { type: http, scheme: bearer }
+  parameters:
+    Limit: { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 100, default: 20 } }
+  responses:
+    Error:
+      description: Error
+      content: { application/json: { schema: { type: object, required: [error], properties: { error: { type: string } } } } }
+  schemas:
+    Health: { type: object, required: [status], properties: { status: { type: string } } }
+    Freshness: { type: string, enum: [fresh, stale, unavailable] }
+    Status:
+      type: object
+      required: [generation, source_time, fetched_at, processed_at, freshness]
+      properties:
+        generation: { type: [integer, "null"], format: int64 }
+        source_time: { type: [integer, "null"], format: int64 }
+        fetched_at: { type: [string, "null"], format: date-time }
+        processed_at: { type: [string, "null"], format: date-time }
+        freshness: { $ref: "#/components/schemas/Freshness" }
+    Departure:
+      type: object
+      required: [trip, stop, time, event_time, kind]
+      properties:
+        trip: { type: string }
+        stop: { type: string }
+        time: { type: integer, format: int64 }
+        event_time: { type: [integer, "null"], format: int64 }
+        kind: { type: string, enum: [fresh, stale, unavailable, scheduled] }
+    Departures:
+      type: object
+      required: [status, departures]
+      properties:
+        status: { $ref: "#/components/schemas/Status" }
+        departures: { type: array, maxItems: 100, items: { $ref: "#/components/schemas/Departure" } }
+    Capture:
+      type: object
+      required: [id, hash, source_time, fetched_at]
+      properties:
+        id: { type: integer, format: int64 }
+        hash: { type: string }
+        source_time: { type: [integer, "null"], format: int64 }
+        fetched_at: { type: string, format: date-time }
+    Ops:
+      type: object
+      required: [status, jobs, outcomes, schedule]
+      properties:
+        status: { $ref: "#/components/schemas/Status" }
+        jobs: { type: object, additionalProperties: { type: integer } }
+        outcomes: { type: object, additionalProperties: { type: integer } }
+        schedule: { type: [string, "null"] }

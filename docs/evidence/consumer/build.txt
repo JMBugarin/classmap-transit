@@ -1,0 +1,14 @@
+
+> classmap-transit-operator@0.1.0 build
+> tsc --noEmit && vite build
+
+vite v8.3.5 building client environment for production...
+transforming...
+✓ 16 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.25 kB │ gzip:  0.20 kB
+dist/assets/index-DE4iLG38.css    0.47 kB │ gzip:  0.30 kB
+dist/assets/index-rYLuU0UQ.js   222.78 kB │ gzip: 69.83 kB
+
+✓ built in 316ms

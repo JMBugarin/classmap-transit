@@ -1,0 +1,28 @@
+$ transit schedule fixtures/metro-static.zip
+8f44814c50c2962a199817ce61944fd51484628108d8130e2f00791776d5c4ff
+$ SCHEDULE_VERSION=<schedule> transit ingest fixtures/metro-trips.pb
+8
+$ transit replay fixture-a fixtures/metro-trips.pb (x2)
+{"fingerprint":"3e6ccddb65cac4b5f49407154f0b9d7b3ab9e10a5b1a5cc2247499e488f84181","namespace":"replay-fixture-a"}
+{"fingerprint":"3e6ccddb65cac4b5f49407154f0b9d7b3ab9e10a5b1a5cc2247499e488f84181","namespace":"replay-fixture-b"}
+$ GET /healthz
+{"status":"ok"}
+ [200]
+$ GET /readyz
+{"status":"ready"}
+ [200]
+$ GET /v1/feed-status
+{"generation":8,"source_time":1794712157,"fetched_at":"2026-11-14T20:14:40.658192-08:00","processed_at":"2026-11-14T20:14:41.013838-08:00","freshness":"stale"}
+ [200]
+$ GET /v1/ops
+{"status":{"generation":8,"source_time":1794712157,"fetched_at":"2026-11-14T20:14:40.658192-08:00","processed_at":"2026-11-14T20:14:41.013838-08:00","freshness":"stale"},"jobs":{"done":1},"outcomes":{"published":1},"schedule":"8f44814c50c2962a199817ce61944fd51484628108d8130e2f00791776d5c4ff"}
+ [200]
+$ GET /v1/departures?stop=1660&limit=3
+{"departures":[{"trip":"4454010","stop":"1660","time":1794716880,"event_time":null,"kind":"scheduled"},{"trip":"1856010","stop":"1660","time":1794717900,"event_time":null,"kind":"scheduled"},{"trip":"1276010","stop":"1660","time":1794718080,"event_time":null,"kind":"scheduled"}],"status":{"generation":8,"source_time":1794712157,"fetched_at":"2026-11-14T20:14:40.658192-08:00","processed_at":"2026-11-14T20:14:41.013838-08:00","freshness":"stale"}}
+ [200]
+$ GET /v1/departures?stop=1617&limit=3
+{"departures":[],"status":{"generation":8,"source_time":1794712157,"fetched_at":"2026-11-14T20:14:40.658192-08:00","processed_at":"2026-11-14T20:14:41.013838-08:00","freshness":"stale"}}
+ [200]
+$ GET /v1/departures?limit=500&stop=x
+{"error":"limit must be 1..100"}
+ [400]
