@@ -67,6 +67,17 @@ func main() {
 			}
 			fmt.Println(id)
 			return
+		case "prune":
+			keep, e := time.ParseDuration(envOr("RETAIN", "168h"))
+			if e != nil || keep < time.Hour {
+				log.Fatal("RETAIN must be at least 1h")
+			}
+			n, e := s.Prune(ctx, time.Now().Add(-keep), 1000)
+			if e != nil {
+				log.Fatal(e)
+			}
+			fmt.Println(n)
+			return
 		case "replay":
 			if len(os.Args) < 4 || os.Args[2] == "live" {
 				log.Fatal("replay requires an isolated namespace and capture files")
