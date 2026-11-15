@@ -1,0 +1,9 @@
+Darwin Joshuas-MacBook-Pro.local 25.6.0 Darwin Kernel Version 25.6.0: Sat Jul 11 15:27:04 PDT 2026; root:xnu-12377.161.13~4/RELEASE_ARM64_T6050 arm64
+Apple M5 Pro
+18
+25769803776
+go version go1.27.4 darwin/arm64
+k6 v2.4.0 (commit/devel, go1.27.4, darwin/arm64)
+PostgreSQL 17.12 (Debian 17.12-1.pgdg13+1) on aarch64-unknown-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit
+ded5906a99e7a6ee94370840e7b224c1e54e53fa
+?? bench/raw/

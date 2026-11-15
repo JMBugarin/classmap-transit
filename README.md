@@ -53,6 +53,10 @@ cd web && npm test && npm run build && npm run e2e
 
 Database tests use a real PostgreSQL and skip when `TEST_DATABASE_URL` is unset. Raw outputs from local runs are in `docs/evidence/`.
 
+## Benchmark
+
+Exploratory same-machine k6 comparison of uncached, indexed and cached departures over 1M synthetic observations: [bench/PROTOCOL.md](bench/PROTOCOL.md) and [bench/REPORT.md](bench/REPORT.md). Without the stop index the API saturates at 100 requests/s; with it, every run held 100 requests/s with 0 errors and departures p95 of 2.6–2.7 ms.
+
 ## Scope
 
 Single agency, local development only. Not deployed, so there is no measured uptime, cost or traffic. Fixtures are one static zip and one trip-updates snapshot, captured once with no repeated polling of the upstream feed.
