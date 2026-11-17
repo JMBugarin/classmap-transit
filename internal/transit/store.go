@@ -157,7 +157,12 @@ func (s *Store) Process(ctx context.Context, j Job) error {
 					continue
 				}
 				for i, st := range u.StopTimeUpdate {
-					if st.GetStopId() == "" || st.GetDeparture() == nil || st.Departure.Time == nil {
+					ev := st.GetDeparture()
+					if ev == nil || ev.Time == nil {
+						ev = st.GetArrival()
+					}
+					rel := st.GetScheduleRelationship()
+					if st.GetStopId() == "" || ev == nil || ev.Time == nil || rel == gtfs.TripUpdate_StopTimeUpdate_SKIPPED || rel == gtfs.TripUpdate_StopTimeUpdate_NO_DATA {
 						continue
 					}
 					var event *int64
@@ -165,7 +170,7 @@ func (s *Store) Process(ctx context.Context, j Job) error {
 						t := int64(u.GetTimestamp())
 						event = &t
 					}
-					_, e = tx.Exec(ctx, "INSERT INTO observations(generation,entity,sequence,trip,stop,predicted,event_time) VALUES($1,$2,$3,$4,$5,$6,$7)", j.Capture, en.GetId(), i, u.GetTrip().GetTripId(), st.GetStopId(), st.GetDeparture().GetTime(), event)
+					_, e = tx.Exec(ctx, "INSERT INTO observations(generation,entity,sequence,trip,stop,predicted,event_time) VALUES($1,$2,$3,$4,$5,$6,$7)", j.Capture, en.GetId(), i, u.GetTrip().GetTripId(), st.GetStopId(), ev.GetTime(), event)
 					if e != nil {
 						return e
 					}

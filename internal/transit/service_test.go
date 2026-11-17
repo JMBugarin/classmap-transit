@@ -194,3 +194,68 @@ func TestSeedBenchRefusesNonBenchDatabase(t *testing.T) {
 		t.Fatal(e)
 	}
 }
+
+func TestProcessRealMetroTripsStoresArrivals(t *testing.T) {
+	s, ns := setup(t)
+	ctx := context.Background()
+	raw, e := os.ReadFile("../../fixtures/metro-trips.pb")
+	if e != nil {
+		t.Fatal(e)
+	}
+	m, e := Decode(raw)
+	if e != nil {
+		t.Fatal(e)
+	}
+	at := time.Unix(int64(m.Header.GetTimestamp()), 0)
+	s.Now = func() time.Time { return at }
+	id := process(t, s, ns, raw)
+	var rows, stops int
+	if e = s.DB.QueryRow(ctx, "SELECT count(*),count(DISTINCT stop) FROM observations WHERE generation=$1", id).Scan(&rows, &stops); e != nil {
+		t.Fatal(e)
+	}
+	if rows != 2026 || stops != 476 {
+		t.Fatal(rows, stops)
+	}
+}
+
+func TestProcessStopTimeEvents(t *testing.T) {
+	s, ns := setup(t)
+	ctx := context.Background()
+	now := time.Now()
+	s.Now = func() time.Time { return now }
+	ev := func(at int64) *gtfs.TripUpdate_StopTimeEvent {
+		return &gtfs.TripUpdate_StopTimeEvent{Time: proto.Int64(at)}
+	}
+	skipped := gtfs.TripUpdate_StopTimeUpdate_SKIPPED
+	noData := gtfs.TripUpdate_StopTimeUpdate_NO_DATA
+	base := now.Unix()
+	m := &gtfs.FeedMessage{Header: &gtfs.FeedHeader{GtfsRealtimeVersion: proto.String("2.0"), Timestamp: proto.Uint64(uint64(base))}, Entity: []*gtfs.FeedEntity{{Id: proto.String("e"), TripUpdate: &gtfs.TripUpdate{Trip: &gtfs.TripDescriptor{TripId: proto.String("t")}, StopTimeUpdate: []*gtfs.TripUpdate_StopTimeUpdate{
+		{StopId: proto.String("arrival-only"), Arrival: ev(base + 60)},
+		{StopId: proto.String("both"), Arrival: ev(base + 100), Departure: ev(base + 120)},
+		{StopId: proto.String("skipped"), Arrival: ev(base + 200), Departure: ev(base + 210), ScheduleRelationship: &skipped},
+		{StopId: proto.String("no-data"), Arrival: ev(base + 300), Departure: ev(base + 310), ScheduleRelationship: &noData},
+		{StopId: proto.String("delay-only"), Departure: &gtfs.TripUpdate_StopTimeEvent{Delay: proto.Int32(30)}},
+	}}}}}
+	b, _ := proto.Marshal(m)
+	id := process(t, s, ns, b)
+	rows, e := s.DB.Query(ctx, "SELECT stop,predicted FROM observations WHERE generation=$1 ORDER BY sequence", id)
+	if e != nil {
+		t.Fatal(e)
+	}
+	got := map[string]int64{}
+	for rows.Next() {
+		var stop string
+		var at int64
+		if e = rows.Scan(&stop, &at); e != nil {
+			t.Fatal(e)
+		}
+		got[stop] = at
+	}
+	if rows.Err() != nil {
+		t.Fatal(rows.Err())
+	}
+	want := map[string]int64{"arrival-only": base + 60, "both": base + 120}
+	if len(got) != len(want) || got["arrival-only"] != want["arrival-only"] || got["both"] != want["both"] {
+		t.Fatalf("got %v want %v", got, want)
+	}
+}
