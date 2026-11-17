@@ -87,6 +87,9 @@ func (s *Store) ImportSchedule(ctx context.Context, raw []byte) (string, error) 
 		return "", e
 	}
 	defer tx.Rollback(ctx)
+	if _, e = tx.Exec(ctx, "SET LOCAL statement_timeout = 0"); e != nil {
+		return "", e
+	}
 	tag, e := tx.Exec(ctx, "INSERT INTO schedules(id,timezone,raw) VALUES($1,$2,$3) ON CONFLICT DO NOTHING", id, zone, raw)
 	if e != nil {
 		return "", e
