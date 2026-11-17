@@ -1,0 +1,9 @@
+[Unit]
+Description=classmap-transit backup and retention prune
+After=docker.service
+
+[Service]
+Type=oneshot
+User=ec2-user
+WorkingDirectory=/opt/classmap-transit
+ExecStart=/opt/classmap-transit/ops/maintain.sh
