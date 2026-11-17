@@ -197,7 +197,7 @@ func (a *API) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if !a.Cache || !ok || !cached.expires.After(now) {
 		out = []Departure{}
 		if st.Generation != nil {
-			rows, e := a.Store.DB.Query(ctx, `SELECT trip,stop,predicted,event_time FROM observations WHERE generation=$1 AND stop=$2 ORDER BY predicted,trip LIMIT $3`, *st.Generation, stop, limit)
+			rows, e := a.Store.DB.Query(ctx, `SELECT trip,stop,predicted,event_time FROM observations WHERE generation=$1 AND stop=$2 AND predicted>=$4 ORDER BY predicted,trip LIMIT $3`, *st.Generation, stop, limit, now.Unix())
 			if e != nil {
 				fail(503, "database unavailable")
 				return

@@ -259,3 +259,27 @@ func TestProcessStopTimeEvents(t *testing.T) {
 		t.Fatalf("got %v want %v", got, want)
 	}
 }
+
+func TestDeparturesLimitSkipsPastPredictions(t *testing.T) {
+	s, ns := setup(t)
+	ctx := context.Background()
+	now := time.Now()
+	s.Now = func() time.Time { return now }
+	stop := "limit-past-stop"
+	base := now.Unix()
+	up := func(trip string, at int64) *gtfs.FeedEntity {
+		return &gtfs.FeedEntity{Id: proto.String(trip), TripUpdate: &gtfs.TripUpdate{Trip: &gtfs.TripDescriptor{TripId: proto.String(trip)}, Timestamp: proto.Uint64(uint64(base)), StopTimeUpdate: []*gtfs.TripUpdate_StopTimeUpdate{{StopId: proto.String(stop), Departure: &gtfs.TripUpdate_StopTimeEvent{Time: proto.Int64(at)}}}}}
+	}
+	m := &gtfs.FeedMessage{Header: &gtfs.FeedHeader{GtfsRealtimeVersion: proto.String("2.0"), Timestamp: proto.Uint64(uint64(base))}, Entity: []*gtfs.FeedEntity{up("past", base-60), up("future", base+300)}}
+	b, _ := proto.Marshal(m)
+	id := process(t, s, ns, b)
+	if _, e := s.DB.Exec(ctx, "INSERT INTO feed_state(ns,feed,generation,source_time,hash) VALUES('live','trips',$1,$2,'test') ON CONFLICT(ns,feed) DO UPDATE SET generation=$1,source_time=$2", id, base); e != nil {
+		t.Fatal(e)
+	}
+	w := httptest.NewRecorder()
+	(&API{Store: s}).ServeHTTP(w, httptest.NewRequest("GET", "/v1/departures?stop="+stop+"&limit=1", nil))
+	var x Departures
+	if e := json.Unmarshal(w.Body.Bytes(), &x); e != nil || len(x.Departures) != 1 || x.Departures[0].Trip != "future" || x.Departures[0].Kind != "fresh" {
+		t.Fatal(w.Body.String())
+	}
+}
