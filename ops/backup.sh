@@ -7,5 +7,5 @@ dir=${BACKUP_DIR:-backups}
 mkdir -p "$dir"
 f="$dir/$db-$(date -u +%Y%m%dT%H%M%SZ).dump"
 dc exec -T db pg_dump -U postgres --format=custom --no-owner "$db" > "$f"
-shasum -a 256 "$f" > "$f.sha256"
+(cd "$dir" && sha256 "$(basename "$f")") > "$f.sha256"
 echo "$f"

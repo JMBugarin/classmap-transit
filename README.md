@@ -63,4 +63,4 @@ Image-tagged deploys, rollback, retention, backup/restore and the cost estimate 
 
 ## Scope
 
-Single agency, local development only. Not deployed, so there is no measured uptime, cost or traffic. Fixtures are one static zip and one trip-updates snapshot, captured once with no repeated polling of the upstream feed.
+Single agency. Deployed on one EC2 t4g.small since 2026-11-17 behind SSH only (no public endpoint), with a measured restore drill in docs/operations.md. No measured uptime, cost or traffic yet. Fixtures are one static zip and one trip-updates snapshot, captured once with no repeated polling of the upstream feed.
