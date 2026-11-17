@@ -1,0 +1,15 @@
+region us-west-2 (us-west-2d), on-demand, launched 2026-11-17T09:53:06Z
+instance t4g.small (2 vCPU Graviton, 2 GiB), CPU credits standard (no surplus billing)
+ami ami-0ddf9b5619e7cb21a al2023-ami-2023.12.20261112.0-kernel-6.12-arm64
+root volume 20 GB gp3, encrypted, delete on termination
+security group: inbound tcp/22 from one operator /32 only; API bound to 127.0.0.1:8080 (no public HTTP)
+metadata: IMDSv2 required, hop limit 2
+docker 25.0.14, compose v2.39.4, postgres:17.12
+images: classmap-transit:10e37d2 (old), classmap-transit:dffd820 (new), built arm64 on the operator laptop, shipped with docker save | ssh docker load (14 s for two images)
+poller: https://rt.scmetro.org/gtfsrt/trips every 60s
+schedule import on host: 8,879 ms (235,038 stop_times); first attempt with 87c6e7c/10e37d2 failed at the 5 s statement timeout
+ssh round trip from operator to host: 553-798 ms per connection (5 samples)
+ebs snapshot snap-0276bf58ff4ba696c of the root volume: started 10:02:41Z, completed 10:06:05Z (3 min 24 s), 3.43 GB full size
+maintenance: transit-maintain.timer daily 11:00 UTC (backup + prune RETAIN=168h + delete dumps older than 7 days); first manual run 10:08:25Z OK
+after drill: api 6.7 MiB, db 86.7 MiB RSS; host 1,256 MiB available; disk 3.1 GB of 20 GB used
+departures on host after restore: GET /v1/departures?stop=1594 200 in 0.153 s (scheduled fallback, 02:08 local)

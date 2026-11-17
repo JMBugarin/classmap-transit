@@ -1,0 +1,46 @@
+2026-11-17T10:02:28Z cloud drill host=ec2-user@<host> old=10e37d2 new=dffd820 loss_wait=300s
+start-tag dffd820 generation 5
+ Container classmap-transit-db-1  Running
+ Container classmap-transit-api-1  Running
+ Container classmap-transit-db-1  Waiting
+ Container classmap-transit-db-1  Healthy
+deploy-new-ms 1818 generation 5
+ Container classmap-transit-db-1  Running
+ Container classmap-transit-api-1  Recreate
+ Container classmap-transit-api-1  Recreated
+ Container classmap-transit-db-1  Waiting
+ Container classmap-transit-db-1  Healthy
+ Container classmap-transit-api-1  Starting
+ Container classmap-transit-api-1  Started
+deploy-old-ms 2541 generation 6
+ Container classmap-transit-db-1  Running
+ Container classmap-transit-api-1  Recreate
+ Container classmap-transit-api-1  Recreated
+ Container classmap-transit-db-1  Waiting
+ Container classmap-transit-db-1  Healthy
+ Container classmap-transit-api-1  Starting
+ Container classmap-transit-api-1  Started
+rollback-to-dffd820-ms 3160 generation 6
+backup-ms 2351 backups/transit-20261117T100242Z.dump 6492104 bytes
+offhost-copy-ms 2753
+transit-20261117T100242Z.dump: OK
+2026-11-17T10:02:49Z polling for 300s after backup before failure
+at-failure captures/fetches-after-backup/seconds-since-backup 5 5 305
+at-failure generation 12 (backup generation 6)
+2026-11-17T10:07:51Z failure: docker compose down -v (database volume destroyed)
+copy-back-ms 2613
+db-up-ms 4218
+restore-ms 3226
+reconcile identical to backup-time report
+ Container classmap-transit-db-1  Running
+ Container classmap-transit-api-1  Creating
+ Container classmap-transit-api-1  Created
+ Container classmap-transit-db-1  Waiting
+ Container classmap-transit-db-1  Healthy
+ Container classmap-transit-api-1  Starting
+ Container classmap-transit-api-1  Started
+failure-to-ready-ms 18024 generation 8
+failure-to-new-generation-ms 19604 generation 8
+{"generation":8,"source_time":1794910083,"fetched_at":"2026-11-17T10:08:09.569587Z","processed_at":"2026-11-17T10:08:09.773675Z","freshness":"fresh"}
+
+2026-11-17T10:08:12Z cloud drill done

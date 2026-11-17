@@ -1,6 +1,6 @@
 # Operations
 
-Single-host deployment: one Linux VM running `compose.yaml` (PostgreSQL 17.12 plus the API image). Nothing here has run in the cloud yet. Local drill results are in `docs/evidence/operations/`.
+Single-host deployment: one Linux VM running `compose.yaml` (PostgreSQL 17.12 plus the API image). It runs on one EC2 t4g.small in us-west-2 since 2026-11-17 (see Cloud deployment below). Local drill results are in `docs/evidence/operations/`, cloud results in `docs/evidence/cloud/`.
 
 ## Images
 
@@ -31,7 +31,7 @@ Set these in a `.env` next to `compose.yaml` (gitignored): `POSTGRES_PASSWORD`, 
 docker compose run --rm -e RETAIN=168h api prune
 ```
 
-This deletes captures, plus their fetches, jobs, outcomes and observations, when nothing has fetched them within `RETAIN` (default 7 days, minimum 1 h). It keeps every published generation (`feed_state`) and every capture whose job is pending or running. It works in batches of 1,000 rows per transaction, so it doesn't hold long locks. Run it daily from cron.
+This deletes captures, plus their fetches, jobs, outcomes and observations, when nothing has fetched them within `RETAIN` (default 7 days, minimum 1 h). It keeps every published generation (`feed_state`) and every capture whose job is pending or running. It works in batches of 1,000 rows per transaction, so it doesn't hold long locks. On the host, `ops/maintain.sh` runs daily from `ops/systemd/transit-maintain.timer` (11:00 UTC): backup, prune with `RETAIN=168h`, and delete dumps older than 7 days.
 
 Sizing: one METRO TripUpdates snapshot was 61 KB (`fixtures/metro-trips.pb`). At one poll per 30 s that is at most 2,880 captures and about 176 MB of raw protobuf per day, before deduplication by hash. Seven days of retention is about 1.2 GB of raw captures plus observations, which fits comfortably on a 20 GB volume.
 
@@ -39,7 +39,7 @@ Sizing: one METRO TripUpdates snapshot was 61 KB (`fixtures/metro-trips.pb`). At
 
 ```
 ops/backup.sh                          # pg_dump -Fc inside the db container, writes backups/<db>-<utc>.dump and .sha256
-ops/restore.sh <dump> transit_restore  # verifies the checksum, restores into a new database in one transaction
+ops/restore.sh <dump> transit_restore  # verifies the checksum (relative to the dump's directory), restores into a new database in one transaction
 ops/reconcile.sh <db>                  # row counts and content digests per table
 ```
 
@@ -87,3 +87,43 @@ Prices checked November 14, 2026, US West (Oregon), on-demand Linux. The EC2 rat
 | **Total** | | **≈ $17.80/month** |
 
 A t4g.micro (1 GiB, $0.0084/h) brings this to about $11.75/month, but 1 GiB is tight for PostgreSQL plus the API. Recommended budget: a $25/month AWS Budgets alert at 50%, 80% and 100%, with no reserved capacity and no free-tier assumption. Nothing is provisioned until that budget and credentials exist.
+
+## Cloud deployment (D02)
+
+One t4g.small (2 vCPU Graviton, 2 GiB, standard CPU credits) in us-west-2 running Amazon Linux 2023, Docker and this `compose.yaml` from `/opt/classmap-transit`. Root volume 20 GB gp3, encrypted. The security group allows only SSH from the operator's address. The API stays on `127.0.0.1:8080`, so reach it through `ssh -L 8080:127.0.0.1:8080`. There is no public endpoint or TLS yet. The poller fetches the live METRO TripUpdates feed every 60 s (`POLL_INTERVAL=60s`). Secrets live only in the host's `.env` (mode 600).
+
+Images are built arm64 on the operator machine and shipped with `docker save classmap-transit:<tag> | gzip | ssh <host> docker load`, then `ops/deploy.sh <tag>` on the host. There's no registry.
+
+The first cloud schedule import failed. The default 5 s `statement_timeout` cancelled the 235,038-row `stop_times` COPY on this instance, though the same import finishes in about 2.5 s on the laptop. The import transaction now sets `statement_timeout = 0` locally, and the import takes 8.9 s on the host.
+
+### Recovery drill
+
+`ops/cloud-drill.sh <user@host> <old> <new>` runs from the operator machine. It deploys, rolls back, takes a backup and copies it off the host. After `LOSS_WAIT` seconds of live polling it destroys the database volume with `docker compose down -v`, copies the dump back, restores it, reconciles it against the backup-time report, redeploys, and waits for a new generation. Run on 2026-11-17 with `10e37d2` as old and `dffd820` as new, `LOSS_WAIT=300` (`docs/evidence/cloud/drill.txt`):
+
+| Step | Result |
+|---|---|
+| Deploy `dffd820` (already current, readiness only) | 1,818 ms |
+| Deploy `10e37d2` | 2,541 ms |
+| Roll back to `dffd820` | 3,160 ms, generation unchanged |
+| Backup (`pg_dump -Fc`) | 2,351 ms, 6.49 MB |
+| Copy dump to the operator machine | 2,753 ms, checksum OK |
+| Live polling after backup | 305 s, generations 6 → 12 |
+| **Failure**: database volume destroyed | 10:07:51Z |
+| Copy dump back to the host | 2,613 ms |
+| Start an empty database | 4,218 ms |
+| Restore | 3,226 ms |
+| Reconcile restored vs backup-time report | identical on all 9 tables |
+| Failure → `/readyz` on `dffd820` | **18.0 s** |
+| Failure → first new published generation | **19.6 s**, fresh |
+
+Every step is timed with the host clock but includes one or two SSH connections from the laptop (553–798 ms each). The step times are upper bounds.
+
+Data loss: the 5 captures and 5 fetches made between the backup and the failure were lost, which is 305 s of realtime history. Current service was not lost, because the poller published fresh data within 1.6 s of readiness. The data-loss window equals the time since the last backup that left the host. The daily timer writes dumps on the same volume, so after a volume loss the real window is the time since the last manual off-host copy (`scp`) or EBS snapshot. The deploy user has no S3 or Data Lifecycle Manager permissions, so off-host copies aren't automated yet.
+
+Generation ids are capture ids. After the restore the sequence continued from the backup, so ids 7–12 were reissued for different captures (the restored service published generation 8). A client that cached a generation id from before the failure can see the same id for different data.
+
+An EBS snapshot of the root volume (`snap-0276bf58ff4ba696c`, 3.43 GB) took 3 min 24 s. It is crash-consistent, not a database backup, and the dumps stay the primary restore path.
+
+### Cost and budget
+
+The running cost is the D01 estimate, about $17.80/month (t4g.small $12.10, public IPv4 $3.60, gp3 20 GB $1.60, snapshots about $0.50). The deploy user can't read AWS Budgets or Cost Explorer, so this repo hasn't verified the $25/month budget alert. Check it in the console.

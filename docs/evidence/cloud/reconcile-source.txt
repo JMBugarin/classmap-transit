@@ -1,0 +1,9 @@
+schema_versions 1 1
+schedules 1 8f44814c50c2962a199817ce61944fd51484628108d8130e2f00791776d5c4ff
+stop_times 235038 
+captures 6 edd1b5f18c9d5b1aaf5833c5f6307ff9
+fetches 7 7
+jobs 6 d5ee945da8023b55c38bc258a29c8669
+outcomes 6 38d69a8c13790dcc873d7f7fcc29aaf2
+observations 0 
+feed_state 1 live/trips=6
