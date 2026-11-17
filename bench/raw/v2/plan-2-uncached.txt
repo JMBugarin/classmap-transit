@@ -1,0 +1,25 @@
+﻿# 2026-11-17T12:39:49Z rep 2 uncached cache=0 image=dffd820
+Limit  (cost=19608.39..19610.73 rows=20 width=30) (actual time=117.883..119.170 rows=20 loops=1)
+  Buffers: shared hit=10459
+  InitPlan 1
+    ->  Seq Scan on feed_state  (cost=0.00..1.01 rows=1 width=8) (actual time=0.013..0.014 rows=1 loops=1)
+          Filter: (ns = 'live'::text)
+          Buffers: shared hit=1
+  ->  Gather Merge  (cost=19607.38..37403.56 rows=152528 width=30) (actual time=117.881..119.164 rows=20 loops=1)
+        Workers Planned: 2
+        Workers Launched: 2
+        Buffers: shared hit=10459
+        ->  Sort  (cost=18607.36..18798.02 rows=76264 width=30) (actual time=108.356..108.359 rows=16 loops=3)
+              Sort Key: observations.predicted, observations.trip
+              Sort Method: top-N heapsort  Memory: 27kB
+              Buffers: shared hit=10458
+              Worker 0:  Sort Method: top-N heapsort  Memory: 27kB
+              Worker 1:  Sort Method: top-N heapsort  Memory: 27kB
+              ->  Parallel Seq Scan on observations  (cost=0.00..16578.00 rows=76264 width=30) (actual time=0.019..92.400 rows=61552 loops=3)
+                    Filter: ((generation = (InitPlan 1).col1) AND (stop = 'S0000'::text))
+                    Rows Removed by Filter: 271782
+                    Buffers: shared hit=10328
+Planning:
+  Buffers: shared hit=129
+Planning Time: 0.533 ms
+Execution Time: 119.230 ms

@@ -1,0 +1,7 @@
+﻿Linux ip-172-31-61-169.us-west-2.compute.internal 6.12.115-140.210.amzn2023.aarch64 #1 SMP Wed Nov 11 00:31:12 UTC 2026 aarch64 aarch64 aarch64 GNU/Linux
+2
+               total        used        free      shared  buff/cache   available
+Mem:            1842         336         103         140        1402        1197
+Docker version 25.0.14, build 0bab007
+sha256:cfd9e1da349c2eb80d40f0720d62bffe7e2b943600eeecd1c56a655110ba592d
+PostgreSQL 17.12 (Debian 17.12-1.pgdg13+1) on aarch64-unknown-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit
