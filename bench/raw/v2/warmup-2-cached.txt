@@ -1,0 +1,43 @@
+
+
+  █ THRESHOLDS 
+
+    http_req_duration{endpoint:departures}
+    ✓ 'p(95)>=0' p(95)=37.39ms
+
+    http_req_duration{endpoint:feed_status}
+    ✓ 'p(95)>=0' p(95)=37.88ms
+
+    http_req_duration{endpoint:observations}
+    ✓ 'p(95)>=0' p(95)=37.61ms
+
+
+  █ TOTAL RESULTS 
+
+    checks_total.......: 3001    99.927663/s
+    checks_succeeded...: 100.00% 3001 out of 3001
+    checks_failed......: 0.00%   0 out of 3001
+
+    ✓ status 200
+
+    HTTP
+    http_req_duration..............: avg=31.44ms min=22.82ms med=31.23ms p(90)=35.71ms p(95)=37.51ms p(99)=43.18ms max=75.3ms 
+      { endpoint:departures }......: avg=31.53ms min=23.1ms  med=31.31ms p(90)=35.67ms p(95)=37.39ms p(99)=43.59ms max=75.3ms 
+      { endpoint:feed_status }.....: avg=31.2ms  min=22.82ms med=30.99ms p(90)=35.69ms p(95)=37.88ms p(99)=41.67ms max=47.49ms
+      { endpoint:observations }....: avg=31.29ms min=22.9ms  med=31.09ms p(90)=35.9ms  p(95)=37.61ms p(99)=42.86ms max=46.87ms
+      { expected_response:true }...: avg=31.44ms min=22.82ms med=31.23ms p(90)=35.71ms p(95)=37.51ms p(99)=43.18ms max=75.3ms 
+    http_req_failed................: 0.00%  0 out of 3001
+    http_reqs......................: 3001   99.927663/s
+
+    EXECUTION
+    iteration_duration.............: avg=32.08ms min=22.82ms med=31.35ms p(90)=36.11ms p(95)=39.13ms p(99)=64.39ms max=82.69ms
+    iterations.....................: 3001   99.927663/s
+    vus............................: 4      min=3         max=4 
+    vus_max........................: 50     min=50        max=50
+
+    NETWORK
+    data_received..................: 1.2 MB 39 kB/s
+    data_sent......................: 310 kB 10 kB/s
+
+
+

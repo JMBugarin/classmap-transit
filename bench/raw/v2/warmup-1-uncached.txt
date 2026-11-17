@@ -1,0 +1,46 @@
+time="2026-11-17T04:18:44-08:00" level=warning msg="Insufficient VUs, reached 400 active VUs and cannot initialize more" executor=constant-arrival-rate scenario=mix
+
+
+  █ THRESHOLDS 
+
+    http_req_duration{endpoint:departures}
+    ✓ 'p(95)>=0' p(95)=5.03s
+
+    http_req_duration{endpoint:feed_status}
+    ✓ 'p(95)>=0' p(95)=4.34s
+
+    http_req_duration{endpoint:observations}
+    ✓ 'p(95)>=0' p(95)=4.26s
+
+
+  █ TOTAL RESULTS 
+
+    checks_total.......: 2362   67.439613/s
+    checks_succeeded...: 30.65% 724 out of 2362
+    checks_failed......: 69.34% 1638 out of 2362
+
+    ✗ status 200
+      ↳  30% — ✓ 724 / ✗ 1638
+
+    HTTP
+    http_req_duration..............: avg=4.32s min=37.82ms  med=5.03s p(90)=5.03s p(95)=5.03s p(99)=5.04s max=5.05s
+      { endpoint:departures }......: avg=4.98s min=750.57ms med=5.03s p(90)=5.03s p(95)=5.03s p(99)=5.04s max=5.05s
+      { endpoint:feed_status }.....: avg=2.73s min=67.32ms  med=2.81s p(90)=4.16s p(95)=4.34s p(99)=4.55s max=4.66s
+      { endpoint:observations }....: avg=2.61s min=37.82ms  med=2.6s  p(90)=4.11s p(95)=4.26s p(99)=4.54s max=4.6s 
+      { expected_response:true }...: avg=2.72s min=37.82ms  med=2.81s p(90)=4.14s p(95)=4.31s p(99)=4.54s max=4.66s
+    http_req_failed................: 69.34% 1638 out of 2362
+    http_reqs......................: 2362   67.439613/s
+
+    EXECUTION
+    dropped_iterations.............: 638    18.216119/s
+    iteration_duration.............: avg=4.33s min=76.5ms   med=5.03s p(90)=5.05s p(95)=5.06s p(99)=5.07s max=5.08s
+    iterations.....................: 2362   67.439613/s
+    vus............................: 3      min=3            max=400
+    vus_max........................: 400    min=63           max=400
+
+    NETWORK
+    data_received..................: 609 kB 17 kB/s
+    data_sent......................: 244 kB 7.0 kB/s
+
+
+

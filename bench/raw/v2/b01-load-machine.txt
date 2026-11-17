@@ -1,0 +1,51 @@
+Classmap Transit B01 - load-generator machine environment
+Recorded: 2026-11-17 (before any load test; no traffic sent)
+
+Machine:        LENOVO 82Y9 (laptop)
+OS:             Microsoft Windows 11 Home 10.0.26200 (25H2, build 26200.9974)
+CPU:            AMD Ryzen 5 7640HS w/ Radeon 760M Graphics - 6 cores / 12 logical, max 4301 MHz
+RAM:            16,309,932,032 bytes (~15.2 GiB usable)
+
+Power plan:     381b4222-f694-41f0-9685-ff5bb260df2e (Balanced)   [powercfg /getactivescheme]
+Power mode overlay (registry, read only):
+                AC: ded574b5-45a0-4f42-8737-46345c09c238 (Best performance)
+                DC: 961cc777-2547-4f9d-8174-7d86181b8a7a (Best power efficiency)
+Power source:   AC (PowerLineStatus=Online), battery 100%, BatteryStatus=2 (on AC)
+
+Network (default route):
+                Wi-Fi - RZ616 Wi-Fi 6E 160MHz, 802.11ax, 6 GHz band, channel 133
+                Link rate 2402 Mbps rx / 2402 Mbps tx, signal 90% (RSSI -45 dBm)
+Other adapters up (not default route):
+                Ethernet 2 - VirtualBox Host-Only Ethernet Adapter (virtual, 1 Gbps)
+                Tailscale - Tailscale Tunnel (virtual)
+No physical Ethernet adapter is connected.
+
+k6:             k6.exe v2.4.0 (commit/dd9395906d, go1.26.11, windows/amd64) at C:\Program Files\k6\k6.exe
+git:            git version 2.53.0.windows.2
+Repo clone:     C:\Users\<user>\Developer\classmap-transit
+                branch main, HEAD 98ae7c5d2bd06f57d014f54a01db09597b5a1f01, working tree clean
+k6 inspect bench\k6.js: parsed OK (exit 0); scenario mix = constant-arrival-rate 100/s, 10m0s, 50 preallocated VUs, max 400
+
+k6.js environment variables:
+  BASE_URL   default http://127.0.0.1:18080 (must be set to the EC2 target)
+  RATE       default 100 (requests/s)
+  DURATION   default 600s
+  SEED       default 20261115 (request-sequence seed; keep default for comparability)
+
+--- Update 2026-11-17: Ethernet connected (still no load sent) ---
+Default route (Get-NetRoute 0.0.0.0/0), both via gateway 10.0.0.1, route metric 0:
+                Ethernet  ifIndex 5   interface metric 25  (lower = preferred)
+                Wi-Fi     ifIndex 19  interface metric 30  (route still listed as Alive in ActiveStore,
+                                                            but the Wi-Fi adapter reports Disconnected)
+Route lookup:   Find-NetRoute 1.1.1.1 -> Ethernet, source 10.0.0.249
+Active adapter: Ethernet - Realtek PCIe GbE Family Controller, 802.3 wired, Up, 1 Gbps
+Wi-Fi adapter:  RZ616 Wi-Fi 6E - Disconnected
+Ethernet is the active default route: YES
+Other adapters up: VirtualBox Host-Only (virtual), Tailscale (virtual)
+Tailscale:      not using an exit node (ExitNodeID empty, ExitNodeStatus empty);
+                this machine is not offering itself as an exit node (Self.ExitNodeOption=False).
+                Peers: one other device, idle.
+Power:          AC (PowerLineStatus=Online), battery 97%
+Power plan:     Balanced (381b4222-f694-41f0-9685-ff5bb260df2e)
+Power mode:     AC overlay ded574b5-45a0-4f42-8737-46345c09c238 (Best performance), unchanged
+Repo clone:     branch feat/b01-remote-bench, HEAD 11484a8599189569c9e14e3db0bb6cd44c7ce45e, working tree clean

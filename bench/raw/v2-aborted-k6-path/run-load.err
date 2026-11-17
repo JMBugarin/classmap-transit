@@ -1,0 +1,6 @@
+C:\Users\<user>\Developer\classmap-transit\bench\remote\run-load.ps1 : The term 'k6' is not recognized as the name of a 
+cmdlet, function, script file, or operable program. Check the spelling of the name, or if a path was included, verify 
+that the path is correct and try again.
+    + CategoryInfo          : ObjectNotFound: (k6:String) [run-load.ps1], CommandNotFoundException
+    + FullyQualifiedErrorId : CommandNotFoundException,run-load.ps1
+ 
