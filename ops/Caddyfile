@@ -1,0 +1,22 @@
+{
+	admin off
+}
+
+{$PUBLIC_HOST} {
+	@activity {
+		path /v1/activity
+		method POST DELETE
+	}
+	handle @activity {
+		request_body {
+			max_size 1KB
+		}
+		reverse_proxy api:8080 {
+			header_up -X-Forwarded-For
+			header_up -X-Real-IP
+		}
+	}
+	handle {
+		respond 404
+	}
+}

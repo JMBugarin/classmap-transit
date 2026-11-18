@@ -19,3 +19,6 @@ CREATE OR REPLACE FUNCTION next_capture_id() RETURNS bigint LANGUAGE sql VOLATIL
 ALTER TABLE captures ALTER COLUMN id SET DEFAULT next_capture_id();
 INSERT INTO schema_versions VALUES(1) ON CONFLICT DO NOTHING;
 INSERT INTO schema_versions VALUES(2) ON CONFLICT DO NOTHING;
+CREATE TABLE IF NOT EXISTS activity(install uuid, week date CHECK(extract(isodow FROM week)=1), PRIMARY KEY(install,week));
+CREATE TABLE IF NOT EXISTS activity_excluded(install uuid PRIMARY KEY);
+INSERT INTO schema_versions VALUES(3) ON CONFLICT DO NOTHING;

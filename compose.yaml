@@ -27,5 +27,17 @@ services:
     depends_on:
       db:
         condition: service_healthy
+  ingress:
+    image: caddy:2.10.2
+    profiles: [public]
+    restart: unless-stopped
+    environment:
+      PUBLIC_HOST: ${PUBLIC_HOST:-}
+    ports: ["80:80", "443:443"]
+    volumes:
+      - ./ops/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddydata:/data
+    depends_on: [api]
 volumes:
   pgdata:
+  caddydata:

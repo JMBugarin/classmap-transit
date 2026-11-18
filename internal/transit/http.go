@@ -16,7 +16,7 @@ import (
 	"time"
 )
 
-var Routes = []string{"/healthz", "/readyz", "/v1/feed-status", "/v1/departures", "/v1/observations", "/v1/ops", "/v1/admin/requeue"}
+var Routes = []string{"/healthz", "/readyz", "/v1/feed-status", "/v1/departures", "/v1/observations", "/v1/ops", "/v1/admin/requeue", "/v1/activity"}
 
 type Departure struct {
 	Trip      string `json:"trip"`
@@ -99,6 +99,10 @@ func (a *API) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		_ = json.NewEncoder(w).Encode(map[string]int64{"requeued": tag.RowsAffected()})
+		return
+	}
+	if r.URL.Path == "/v1/activity" {
+		a.serveActivity(w, r, fail)
 		return
 	}
 	if r.Method != "GET" {

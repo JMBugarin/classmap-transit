@@ -129,3 +129,25 @@ An EBS snapshot of the root volume (`snap-0276bf58ff4ba696c`, 3.43 GB) took 3 mi
 ### Cost and budget
 
 The running cost is the D01 estimate, about $17.80/month (t4g.small $12.10, public IPv4 $3.60, gp3 20 GB $1.60, snapshots about $0.50). The deploy user can't read AWS Budgets or Cost Explorer, so this repo hasn't verified the $25/month budget alert. Check it in the console.
+
+## Opt-in weekly activity (O02)
+
+The Classmap app can send one ping per install per week when the student has turned on usage counting in Settings. The rules are in the collection protocol: count a participant at most once per Monday–Sunday America/Los_Angeles week, use random ids rather than IP addresses, and send no schedules, queries, locations or names.
+
+- `POST /v1/activity` with `{"install": "<uuid v4>", "week": "YYYY-MM-DD"}`. `week` is the Monday that starts the Pacific week, either the current one or up to 5 weeks back so pings queued offline still count. A repeat for the same week is ignored. The table holds only `install` and `week`.
+- `DELETE /v1/activity?install=<uuid>` is withdrawal. Turning counting off in the app calls it, and every week for that install is deleted.
+- `transit activity-exclude <uuid>...` marks developer and test installs, which are then left out of every report.
+- `transit activity-report [cohort.txt]` prints the finished weeks only (the current week is left out). For each week it gives `active_installs`, the opted-in installs that aren't excluded. With a cohort file it also gives `cohort_participants`. The cohort file is the private consent record: one participant code per line (the first 8 hex digits of the install id, which the app shows under the toggle), with `#` comments. Keep it off the host and out of git.
+
+Limits: the endpoint has no authentication, so anyone could post made-up ids. `active_installs` is therefore an upper bound on installs, not a count of students. Only `cohort_participants` counts consented students. Reinstalling the app or turning counting off and on creates a new id. Students who never opt in are invisible. Publish weekly totals only.
+
+### Public ingress
+
+The API stays on 127.0.0.1. Phones reach the activity endpoint through the `public` compose profile: Caddy on 80/443 with automatic Let's Encrypt TLS for `PUBLIC_HOST`. It forwards only `POST`/`DELETE /v1/activity` (body up to 1 KB) and returns 404 for everything else, so ops, admin and observations stay private. Caddy writes no access log, and the client address headers are dropped before the API. Turn it on only when a TestFlight build that uses it is going out:
+
+1. Allocate an Elastic IP and associate it with the instance, so the hostname survives stop/start. While associated it costs the same as the public IPv4 address billed now. Update SSH targets to the new address.
+2. Open tcp/80 and tcp/443 from 0.0.0.0/0 in `sg-09c5a7adc88d61166`. Port 80 is only for the ACME challenge and redirect.
+3. On the host, set `PUBLIC_HOST=<ip-with-dashes>.sslip.io` in `.env`, then run `docker compose --profile public up -d ingress`.
+4. Build the app with `--dart-define=ACTIVITY_URL=https://<host>/v1/activity`.
+
+To close it: `docker compose --profile public stop ingress`, then revoke the 80/443 rules.
