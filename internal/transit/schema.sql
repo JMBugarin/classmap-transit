@@ -15,4 +15,7 @@ CREATE TABLE IF NOT EXISTS outcomes(capture bigint PRIMARY KEY REFERENCES captur
 CREATE INDEX IF NOT EXISTS observations_stop ON observations(stop,predicted,generation);
 CREATE INDEX IF NOT EXISTS captures_history ON captures(ns,fetched_at,id);
 CREATE INDEX IF NOT EXISTS job_claim ON jobs(state,available_at,lease_until);
+CREATE OR REPLACE FUNCTION next_capture_id() RETURNS bigint LANGUAGE sql VOLATILE AS $$ SELECT setval('captures_id_seq', greatest(nextval('captures_id_seq'), (extract(epoch FROM clock_timestamp())*1000000)::bigint)) $$;
+ALTER TABLE captures ALTER COLUMN id SET DEFAULT next_capture_id();
 INSERT INTO schema_versions VALUES(1) ON CONFLICT DO NOTHING;
+INSERT INTO schema_versions VALUES(2) ON CONFLICT DO NOTHING;
