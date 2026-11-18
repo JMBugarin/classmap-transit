@@ -84,8 +84,13 @@ func TestActivityCountsOncePerWeekAndHonoursWithdrawal(t *testing.T) {
 			t.Errorf("%s: got %d want 400", bad, code)
 		}
 	}
-	if e := s.ExcludeActivity(ctx, dev); e != nil {
+	if e := s.ExcludeActivity(ctx, strings.ToUpper(dev[:8])); e != nil {
 		t.Fatal(e)
+	}
+	for _, bad := range []string{"10f8b75", "10f8b75g", "alice", ""} {
+		if e := s.ExcludeActivity(ctx, bad); e == nil {
+			t.Fatalf("excluded %q", bad)
+		}
 	}
 	weeks, e := s.ActivityReport(ctx, []string{one[:8], "deadbeef"})
 	if e != nil {

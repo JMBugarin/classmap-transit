@@ -136,7 +136,7 @@ The Classmap web map (and the iOS app, in builds that set `ACTIVITY_URL`) can se
 
 - `POST /v1/activity` with `{"install": "<uuid v4>", "week": "YYYY-MM-DD"}`. `week` is the Monday that starts the Pacific week, either the current one or up to 5 weeks back so pings queued offline still count. A repeat for the same week is ignored. The table holds only `install` and `week`.
 - `DELETE /v1/activity?install=<uuid>` is withdrawal. Turning counting off in the app calls it, and every week for that install is deleted.
-- `transit activity-exclude <uuid>...` marks developer and test installs, which are then left out of every report.
+- `transit activity-exclude <uuid or participant code>...` marks developer and test installs, which are then left out of every report. A participant code works before that install has sent anything, and it excludes any install whose id starts with it.
 - `transit activity-report [cohort.txt]` prints the finished weeks only (the current week is left out). For each week it gives `active_installs`, the opted-in installs that aren't excluded. With a cohort file it also gives `cohort_participants`. The cohort file is the private consent record: one participant code per line (the first 8 hex digits of the install id, which the app shows under the toggle), with `#` comments. Keep it off the host and out of git.
 
 Limits: the endpoint has no authentication, so anyone could post made-up ids. `active_installs` is therefore an upper bound on installs, not a count of students. Only `cohort_participants` counts consented students. Reinstalling the app or turning counting off and on creates a new id. Students who never opt in are invisible. Publish weekly totals only.

@@ -22,3 +22,6 @@ INSERT INTO schema_versions VALUES(2) ON CONFLICT DO NOTHING;
 CREATE TABLE IF NOT EXISTS activity(install uuid, week date CHECK(extract(isodow FROM week)=1), PRIMARY KEY(install,week));
 CREATE TABLE IF NOT EXISTS activity_excluded(install uuid PRIMARY KEY);
 INSERT INTO schema_versions VALUES(3) ON CONFLICT DO NOTHING;
+CREATE TABLE IF NOT EXISTS activity_excluded_codes(code text PRIMARY KEY CHECK(code ~ '^[0-9a-f]{8}$'));
+INSERT INTO activity_excluded_codes SELECT left(install::text,8) FROM activity_excluded ON CONFLICT DO NOTHING;
+INSERT INTO schema_versions VALUES(4) ON CONFLICT DO NOTHING;
