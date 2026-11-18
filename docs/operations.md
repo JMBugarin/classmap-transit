@@ -132,7 +132,7 @@ The running cost is the D01 estimate, about $17.80/month (t4g.small $12.10, publ
 
 ## Opt-in weekly activity (O02)
 
-The Classmap app can send one ping per install per week when the student has turned on usage counting in Settings. The rules are in the collection protocol: count a participant at most once per Monday–Sunday America/Los_Angeles week, use random ids rather than IP addresses, and send no schedules, queries, locations or names.
+The Classmap web map (and the iOS app, in builds that set `ACTIVITY_URL`) can send one ping per install per week when the student has turned on usage counting in Settings. The rules are in the collection protocol: count a participant at most once per Monday–Sunday America/Los_Angeles week, use random ids rather than IP addresses, and send no schedules, queries, locations or names.
 
 - `POST /v1/activity` with `{"install": "<uuid v4>", "week": "YYYY-MM-DD"}`. `week` is the Monday that starts the Pacific week, either the current one or up to 5 weeks back so pings queued offline still count. A repeat for the same week is ignored. The table holds only `install` and `week`.
 - `DELETE /v1/activity?install=<uuid>` is withdrawal. Turning counting off in the app calls it, and every week for that install is deleted.
@@ -143,11 +143,17 @@ Limits: the endpoint has no authentication, so anyone could post made-up ids. `a
 
 ### Public ingress
 
-The API stays on 127.0.0.1. Phones reach the activity endpoint through the `public` compose profile: Caddy on 80/443 with automatic Let's Encrypt TLS for `PUBLIC_HOST`. It forwards only `POST`/`DELETE /v1/activity` (body up to 1 KB) and returns 404 for everything else, so ops, admin and observations stay private. Caddy writes no access log, and the client address headers are dropped before the API. Turn it on only when a TestFlight build that uses it is going out:
+The API stays on 127.0.0.1. The hosted web map (GitHub Pages) reaches it through the `public` compose profile: Caddy on 80/443 with automatic Let's Encrypt TLS for `PUBLIC_HOST`. Only these requests are forwarded:
 
-1. Allocate an Elastic IP and associate it with the instance, so the hostname survives stop/start. While associated it costs the same as the public IPv4 address billed now. Update SSH targets to the new address.
-2. Open tcp/80 and tcp/443 from 0.0.0.0/0 in `sg-09c5a7adc88d61166`. Port 80 is only for the ACME challenge and redirect.
-3. On the host, set `PUBLIC_HOST=<ip-with-dashes>.sslip.io` in `.env`, then run `docker compose --profile public up -d ingress`.
-4. Build the app with `--dart-define=ACTIVITY_URL=https://<host>/v1/activity`.
+- `GET /v1/departures` and `GET /v1/feed-status`, for live departures on the web map.
+- `POST`, `DELETE` and `OPTIONS /v1/activity`, for opt-in counting and its browser preflight. A preflight succeeds only from `ALLOWED_ORIGIN`.
+
+Request bodies are capped at 1 KB, and everything else returns 404, so ops, admin and observations stay private. Caddy writes no access log, and the client address headers are dropped before the API.
+
+Setup:
+
+1. Allocate an Elastic IP and associate it with the instance, so the hostname survives stop/start. While associated it costs the same as the public IPv4 address billed before. Update SSH targets to the new address.
+2. Open tcp/80 and tcp/443 from 0.0.0.0/0 in `sg-09c5a7adc88d61166`. Port 80 is only for the ACME challenge and the redirect.
+3. On the host, set `PUBLIC_HOST=<ip-with-dashes>.sslip.io` and `ALLOWED_ORIGIN=https://jmbugarin.github.io` in `.env`, redeploy the api, then run `docker compose --profile public up -d ingress`.
 
 To close it: `docker compose --profile public stop ingress`, then revoke the 80/443 rules.

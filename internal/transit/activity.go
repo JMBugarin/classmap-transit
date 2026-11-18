@@ -147,6 +147,15 @@ func (a *API) serveActivity(w http.ResponseWriter, r *http.Request, fail func(in
 			return
 		}
 		w.WriteHeader(204)
+	case "OPTIONS":
+		if a.Origin == "" || r.Header.Get("Origin") != a.Origin {
+			fail(403, "origin not allowed")
+			return
+		}
+		w.Header().Set("Access-Control-Allow-Methods", "POST, DELETE")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+		w.Header().Set("Access-Control-Max-Age", "86400")
+		w.WriteHeader(204)
 	default:
 		fail(405, "method not allowed")
 	}

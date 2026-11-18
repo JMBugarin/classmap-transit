@@ -120,3 +120,28 @@ func TestActivityCountsOncePerWeekAndHonoursWithdrawal(t *testing.T) {
 		t.Fatalf("activity stores more than install and week: %v", cols)
 	}
 }
+
+func TestActivityPreflightOnlyForTheAllowedOrigin(t *testing.T) {
+	a := &API{Origin: "https://jmbugarin.github.io"}
+	for _, c := range []struct {
+		origin string
+		code   int
+	}{{"https://jmbugarin.github.io", 204}, {"https://example.com", 403}, {"", 403}} {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest("OPTIONS", "/v1/activity", nil)
+		if c.origin != "" {
+			r.Header.Set("Origin", c.origin)
+		}
+		a.ServeHTTP(w, r)
+		if w.Code != c.code {
+			t.Fatalf("%q: got %d want %d", c.origin, w.Code, c.code)
+		}
+		allowed := w.Header().Get("Access-Control-Allow-Origin")
+		if c.code == 204 && (allowed != c.origin || !strings.Contains(w.Header().Get("Access-Control-Allow-Methods"), "DELETE")) {
+			t.Fatalf("preflight headers %v", w.Header())
+		}
+		if c.code != 204 && allowed != "" {
+			t.Fatalf("allowed origin %q for %q", allowed, c.origin)
+		}
+	}
+}
