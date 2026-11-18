@@ -22,3 +22,5 @@ INSERT INTO schema_versions VALUES(2) ON CONFLICT DO NOTHING;
 CREATE TABLE IF NOT EXISTS activity(install uuid, week date CHECK(extract(isodow FROM week)=1), PRIMARY KEY(install,week));
 CREATE TABLE IF NOT EXISTS activity_excluded(install uuid PRIMARY KEY);
 INSERT INTO schema_versions VALUES(3) ON CONFLICT DO NOTHING;
+CREATE INDEX IF NOT EXISTS fetches_capture_fetched_at ON fetches(capture,fetched_at);
+INSERT INTO schema_versions VALUES(4) ON CONFLICT DO NOTHING;
