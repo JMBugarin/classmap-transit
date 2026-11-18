@@ -194,10 +194,12 @@ func (a *API) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	a.mu.Unlock()
 	now := a.Store.Now()
 	out := cached.rows
-	if !a.Cache || !ok || !cached.expires.After(now) {
+	// Once the first cached prediction passes, a later trip may enter the limited result.
+	firstHasPassed := len(out) > 0 && out[0].Time < now.Unix()
+	if !a.Cache || !ok || !cached.expires.After(now) || firstHasPassed {
 		out = []Departure{}
 		if st.Generation != nil {
-			rows, e := a.Store.DB.Query(ctx, `SELECT trip,stop,predicted,event_time FROM observations WHERE generation=$1 AND stop=$2 AND predicted>=$4 ORDER BY predicted,trip LIMIT $3`, *st.Generation, stop, limit, now.Unix())
+			rows, e := a.Store.DB.Query(ctx, `SELECT trip,stop,predicted,event_time FROM observations WHERE generation=$1 AND stop=$2 AND predicted>=$3 ORDER BY predicted,trip LIMIT $4`, *st.Generation, stop, now.Unix(), limit)
 			if e != nil {
 				fail(503, "database unavailable")
 				return

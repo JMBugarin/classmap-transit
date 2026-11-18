@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
+	"maps"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -218,6 +219,18 @@ func TestProcessRealMetroTripsStoresArrivals(t *testing.T) {
 	}
 }
 
+func processTripUpdates(t *testing.T, s *Store, ns string, entities ...*gtfs.FeedEntity) int64 {
+	t.Helper()
+	b, err := proto.Marshal(&gtfs.FeedMessage{
+		Header: &gtfs.FeedHeader{GtfsRealtimeVersion: proto.String("2.0"), Timestamp: proto.Uint64(uint64(s.Now().Unix()))},
+		Entity: entities,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	return process(t, s, ns, b)
+}
+
 func TestProcessStopTimeEvents(t *testing.T) {
 	s, ns := setup(t)
 	ctx := context.Background()
@@ -229,19 +242,22 @@ func TestProcessStopTimeEvents(t *testing.T) {
 	skipped := gtfs.TripUpdate_StopTimeUpdate_SKIPPED
 	noData := gtfs.TripUpdate_StopTimeUpdate_NO_DATA
 	base := now.Unix()
-	m := &gtfs.FeedMessage{Header: &gtfs.FeedHeader{GtfsRealtimeVersion: proto.String("2.0"), Timestamp: proto.Uint64(uint64(base))}, Entity: []*gtfs.FeedEntity{{Id: proto.String("e"), TripUpdate: &gtfs.TripUpdate{Trip: &gtfs.TripDescriptor{TripId: proto.String("t")}, StopTimeUpdate: []*gtfs.TripUpdate_StopTimeUpdate{
+	stops := []*gtfs.TripUpdate_StopTimeUpdate{
 		{StopId: proto.String("arrival-only"), Arrival: ev(base + 60)},
 		{StopId: proto.String("both"), Arrival: ev(base + 100), Departure: ev(base + 120)},
 		{StopId: proto.String("skipped"), Arrival: ev(base + 200), Departure: ev(base + 210), ScheduleRelationship: &skipped},
 		{StopId: proto.String("no-data"), Arrival: ev(base + 300), Departure: ev(base + 310), ScheduleRelationship: &noData},
 		{StopId: proto.String("delay-only"), Departure: &gtfs.TripUpdate_StopTimeEvent{Delay: proto.Int32(30)}},
-	}}}}}
-	b, _ := proto.Marshal(m)
-	id := process(t, s, ns, b)
+	}
+	id := processTripUpdates(t, s, ns, &gtfs.FeedEntity{
+		Id:         proto.String("e"),
+		TripUpdate: &gtfs.TripUpdate{Trip: &gtfs.TripDescriptor{TripId: proto.String("t")}, StopTimeUpdate: stops},
+	})
 	rows, e := s.DB.Query(ctx, "SELECT stop,predicted FROM observations WHERE generation=$1 ORDER BY sequence", id)
 	if e != nil {
 		t.Fatal(e)
 	}
+	defer rows.Close()
 	got := map[string]int64{}
 	for rows.Next() {
 		var stop string
@@ -255,7 +271,7 @@ func TestProcessStopTimeEvents(t *testing.T) {
 		t.Fatal(rows.Err())
 	}
 	want := map[string]int64{"arrival-only": base + 60, "both": base + 120}
-	if len(got) != len(want) || got["arrival-only"] != want["arrival-only"] || got["both"] != want["both"] {
+	if !maps.Equal(got, want) {
 		t.Fatalf("got %v want %v", got, want)
 	}
 }
@@ -268,18 +284,31 @@ func TestDeparturesLimitSkipsPastPredictions(t *testing.T) {
 	stop := "limit-past-stop"
 	base := now.Unix()
 	up := func(trip string, at int64) *gtfs.FeedEntity {
-		return &gtfs.FeedEntity{Id: proto.String(trip), TripUpdate: &gtfs.TripUpdate{Trip: &gtfs.TripDescriptor{TripId: proto.String(trip)}, Timestamp: proto.Uint64(uint64(base)), StopTimeUpdate: []*gtfs.TripUpdate_StopTimeUpdate{{StopId: proto.String(stop), Departure: &gtfs.TripUpdate_StopTimeEvent{Time: proto.Int64(at)}}}}}
+		return &gtfs.FeedEntity{
+			Id: proto.String(trip),
+			TripUpdate: &gtfs.TripUpdate{
+				Trip: &gtfs.TripDescriptor{TripId: proto.String(trip)},
+				StopTimeUpdate: []*gtfs.TripUpdate_StopTimeUpdate{{
+					StopId: proto.String(stop), Arrival: &gtfs.TripUpdate_StopTimeEvent{Time: proto.Int64(at)},
+				}},
+			},
+		}
 	}
-	m := &gtfs.FeedMessage{Header: &gtfs.FeedHeader{GtfsRealtimeVersion: proto.String("2.0"), Timestamp: proto.Uint64(uint64(base))}, Entity: []*gtfs.FeedEntity{up("past", base-60), up("future", base+300)}}
-	b, _ := proto.Marshal(m)
-	id := process(t, s, ns, b)
+	id := processTripUpdates(t, s, ns, up("past", base-60), up("current", base), up("future", base+300))
 	if _, e := s.DB.Exec(ctx, "INSERT INTO feed_state(ns,feed,generation,source_time,hash) VALUES('live','trips',$1,$2,'test') ON CONFLICT(ns,feed) DO UPDATE SET generation=$1,source_time=$2", id, base); e != nil {
 		t.Fatal(e)
 	}
-	w := httptest.NewRecorder()
-	(&API{Store: s}).ServeHTTP(w, httptest.NewRequest("GET", "/v1/departures?stop="+stop+"&limit=1", nil))
-	var x Departures
-	if e := json.Unmarshal(w.Body.Bytes(), &x); e != nil || len(x.Departures) != 1 || x.Departures[0].Trip != "future" || x.Departures[0].Kind != "fresh" {
-		t.Fatal(w.Body.String())
+	api := &API{Store: s, Cache: true}
+	checkNext := func(trip string) {
+		t.Helper()
+		w := httptest.NewRecorder()
+		api.ServeHTTP(w, httptest.NewRequest("GET", "/v1/departures?stop="+stop+"&limit=1", nil))
+		var x Departures
+		if e := json.Unmarshal(w.Body.Bytes(), &x); e != nil || w.Code != 200 || len(x.Departures) != 1 || x.Departures[0].Trip != trip || x.Departures[0].Kind != "fresh" {
+			t.Fatalf("want next trip %s, got %s", trip, w.Body.String())
+		}
 	}
+	checkNext("current")
+	now = now.Add(time.Second)
+	checkNext("future")
 }
