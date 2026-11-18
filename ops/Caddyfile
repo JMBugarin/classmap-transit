@@ -5,12 +5,22 @@
 {$PUBLIC_HOST} {
 	@activity {
 		path /v1/activity
-		method POST DELETE
+		method POST DELETE OPTIONS
+	}
+	@read {
+		path /v1/departures /v1/feed-status
+		method GET
+	}
+	request_body {
+		max_size 1KB
 	}
 	handle @activity {
-		request_body {
-			max_size 1KB
+		reverse_proxy api:8080 {
+			header_up -X-Forwarded-For
+			header_up -X-Real-IP
 		}
+	}
+	handle @read {
 		reverse_proxy api:8080 {
 			header_up -X-Forwarded-For
 			header_up -X-Real-IP
