@@ -122,6 +122,8 @@ Data loss: the 5 captures and 5 fetches made between the backup and the failure 
 
 Generation ids are capture ids. After the restore the sequence continued from the backup, so ids 7–12 were reissued for different captures (the restored service published generation 8). A client that cached a generation id from before the failure can see the same id for different data.
 
+Fixed in schema version 2. New capture ids come from `next_capture_id()`, which takes the larger of the next sequence value and the database clock in microseconds since the Unix epoch, then moves the sequence to it. A restore can rewind the sequence but not the clock, so every id issued after a restore is larger than any id issued before the failure. This holds as long as the database host's clock doesn't step back past the time of the lost captures. Ids are about 1.8 × 10¹⁵, inside the 2⁵³ range that JSON clients read exactly. Existing ids keep their values, and the first new id after the upgrade jumps to the clock value. `TestGenerationIDsSurviveRestore` rewinds the sequence and deletes a published capture, the way restoring an older dump does, and checks that the next generation is larger than the lost one.
+
 An EBS snapshot of the root volume (`snap-0276bf58ff4ba696c`, 3.43 GB) took 3 min 24 s. It is crash-consistent, not a database backup, and the dumps stay the primary restore path.
 
 ### Cost and budget

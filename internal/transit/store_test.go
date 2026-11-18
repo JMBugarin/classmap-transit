@@ -313,3 +313,48 @@ func TestPruneKeepsPublishedAndUnfinished(t *testing.T) {
 		t.Fatal("current observations", n, e)
 	}
 }
+func TestGenerationIDsSurviveRestore(t *testing.T) {
+	s, ns := setup(t)
+	ctx := context.Background()
+	now := s.Now().Unix()
+	backedUp := process(t, s, ns, capture(uint64(now), "a"))
+	lost := process(t, s, ns, capture(uint64(now+1), "b"))
+	if lost <= backedUp {
+		t.Fatalf("ids not increasing: %d then %d", backedUp, lost)
+	}
+	tx, e := s.DB.Begin(ctx)
+	if e != nil {
+		t.Fatal(e)
+	}
+	if _, e = tx.Exec(ctx, "UPDATE feed_state SET generation=$1,source_time=$2 WHERE ns=$3", backedUp, now, ns); e != nil {
+		t.Fatal(e)
+	}
+	for _, q := range []string{
+		"DELETE FROM observations WHERE generation=$1",
+		"DELETE FROM outcomes WHERE capture=$1",
+		"DELETE FROM jobs WHERE capture=$1",
+		"DELETE FROM fetches WHERE capture=$1",
+		"DELETE FROM captures WHERE id=$1",
+	} {
+		if _, e = tx.Exec(ctx, q, lost); e != nil {
+			t.Fatal(e)
+		}
+	}
+	if _, e = tx.Exec(ctx, "SELECT setval('captures_id_seq', $1)", backedUp); e != nil {
+		t.Fatal(e)
+	}
+	if e = tx.Commit(ctx); e != nil {
+		t.Fatal(e)
+	}
+	next := process(t, s, ns, capture(uint64(now+2), "c"))
+	if next <= lost {
+		t.Fatalf("generation %d reissued after restore (lost %d)", next, lost)
+	}
+	var gen int64
+	if e = s.DB.QueryRow(ctx, "SELECT generation FROM feed_state WHERE ns=$1", ns).Scan(&gen); e != nil || gen != next {
+		t.Fatalf("published %d, want %d: %v", gen, next, e)
+	}
+	if next >= 1<<53 {
+		t.Fatalf("generation %d exceeds JSON-safe integer range", next)
+	}
+}
