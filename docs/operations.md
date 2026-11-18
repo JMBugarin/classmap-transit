@@ -154,6 +154,8 @@ Setup:
 
 1. Allocate an Elastic IP and associate it with the instance, so the hostname survives stop/start. While associated it costs the same as the public IPv4 address billed before. Update SSH targets to the new address.
 2. Open tcp/80 and tcp/443 from 0.0.0.0/0 in `sg-09c5a7adc88d61166`. Port 80 is only for the ACME challenge and the redirect.
-3. On the host, set `PUBLIC_HOST=<ip-with-dashes>.sslip.io` and `ALLOWED_ORIGIN=https://jmbugarin.github.io` in `.env`, redeploy the api, then run `docker compose --profile public up -d ingress`.
+3. On the host, set `PUBLIC_HOST=<ip-with-dashes>.sslip.io` and `ALLOWED_ORIGIN=https://jmbugarin.github.io` in `.env`, redeploy the api, then run `TAG=$(cat .deploy/current) docker compose --profile public up -d --no-deps --no-build ingress`. Without `TAG` and `--no-deps`, compose tries to build the `dev` api image on the host, which has no source.
 
 To close it: `docker compose --profile public stop ingress`, then revoke the 80/443 rules.
+
+Live since 2026-11-18: Elastic IP 32.188.109.110 (`eipalloc-0b8677733e2d3b44a`), `PUBLIC_HOST=32-188-109-110.sslip.io`, `ALLOWED_ORIGIN=https://jmbugarin.github.io`, security group rules `sgr-095cfb0f7b52d8c17` (80) and `sgr-0d745a49f70caacaf` (443). SSH now uses the Elastic IP.
