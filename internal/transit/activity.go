@@ -60,11 +60,16 @@ func (s *Store) DeleteActivity(ctx context.Context, install string) (int64, erro
 	return tag.RowsAffected(), e
 }
 
+// ExcludeActivity takes a full install id or its 8-character participant code.
 func (s *Store) ExcludeActivity(ctx context.Context, install string) error {
-	if !installPattern.MatchString(install) {
-		return fmt.Errorf("%w: invalid install", ErrInvalid)
+	code := strings.ToLower(install)
+	if installPattern.MatchString(code) {
+		code = code[:8]
 	}
-	_, e := s.DB.Exec(ctx, "INSERT INTO activity_excluded(install) VALUES($1) ON CONFLICT DO NOTHING", install)
+	if len(code) != 8 || strings.Trim(code, "0123456789abcdef") != "" {
+		return fmt.Errorf("%w: invalid install or participant code", ErrInvalid)
+	}
+	_, e := s.DB.Exec(ctx, "INSERT INTO activity_excluded_codes(code) VALUES($1) ON CONFLICT DO NOTHING", code)
 	return e
 }
 
@@ -94,7 +99,7 @@ func ReadCohort(r io.Reader) ([]string, error) {
 
 func (s *Store) ActivityReport(ctx context.Context, cohort []string) ([]WeekCount, error) {
 	rows, e := s.DB.Query(ctx, `SELECT to_char(a.week,'YYYY-MM-DD'), count(DISTINCT a.install), count(DISTINCT left(a.install::text,8)) FILTER (WHERE left(a.install::text,8) = ANY($1))
-		FROM activity a WHERE NOT EXISTS (SELECT 1 FROM activity_excluded x WHERE x.install=a.install) AND a.week < $2
+		FROM activity a WHERE NOT EXISTS (SELECT 1 FROM activity_excluded x WHERE x.install=a.install) AND NOT EXISTS (SELECT 1 FROM activity_excluded_codes x WHERE x.code=left(a.install::text,8)) AND a.week < $2
 		GROUP BY a.week ORDER BY a.week`, cohort, WeekStart(s.Now()))
 	if e != nil {
 		return nil, e

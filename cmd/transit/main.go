@@ -80,7 +80,7 @@ func main() {
 			return
 		case "activity-exclude":
 			if len(os.Args) < 3 {
-				log.Fatal("usage: activity-exclude <install id>...")
+				log.Fatal("usage: activity-exclude <install id or participant code>...")
 			}
 			for _, id := range os.Args[2:] {
 				if e = s.ExcludeActivity(ctx, id); e != nil {
