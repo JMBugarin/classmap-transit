@@ -61,6 +61,26 @@ paths:
         "400": { $ref: "#/components/responses/Error" }
         "401": { $ref: "#/components/responses/Error" }
         "503": { $ref: "#/components/responses/Error" }
+  /v1/activity:
+    post:
+      operationId: recordActivity
+      description: Opt-in weekly activity. One row per install and America/Los_Angeles week (Monday start); repeats are ignored. No IP address, schedule, query or location is stored.
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: "#/components/schemas/Activity" } } }
+      responses:
+        "204": { description: Recorded or already recorded }
+        "400": { $ref: "#/components/responses/Error" }
+        "503": { $ref: "#/components/responses/Error" }
+    delete:
+      operationId: deleteActivity
+      description: Withdrawal. Deletes every week recorded for the install.
+      parameters:
+        - { name: install, in: query, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "204": { description: Deleted }
+        "400": { $ref: "#/components/responses/Error" }
+        "503": { $ref: "#/components/responses/Error" }
 components:
   securitySchemes:
     bearer: { type: http, scheme: bearer }
@@ -71,6 +91,13 @@ components:
       description: Error
       content: { application/json: { schema: { type: object, required: [error], properties: { error: { type: string } } } } }
   schemas:
+    Activity:
+      type: object
+      additionalProperties: false
+      required: [install, week]
+      properties:
+        install: { type: string, format: uuid, description: Random version 4 UUID made on the device at opt-in }
+        week: { type: string, format: date, description: Monday that starts the America/Los_Angeles week; the current week or up to 5 weeks back }
     Health: { type: object, required: [status], properties: { status: { type: string } } }
     Freshness: { type: string, enum: [fresh, stale, unavailable] }
     Status:

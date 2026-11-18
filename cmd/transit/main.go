@@ -78,6 +78,40 @@ func main() {
 			}
 			fmt.Println(n)
 			return
+		case "activity-exclude":
+			if len(os.Args) < 3 {
+				log.Fatal("usage: activity-exclude <install id>...")
+			}
+			for _, id := range os.Args[2:] {
+				if e = s.ExcludeActivity(ctx, id); e != nil {
+					log.Fatal(e)
+				}
+			}
+			return
+		case "activity-report":
+			var cohort []string
+			if len(os.Args) > 2 {
+				f, e := os.Open(os.Args[2])
+				if e != nil {
+					log.Fatal(e)
+				}
+				cohort, e = transit.ReadCohort(f)
+				f.Close()
+				if e != nil {
+					log.Fatal(e)
+				}
+				if cohort == nil {
+					cohort = []string{}
+				}
+			}
+			weeks, e := s.ActivityReport(ctx, cohort)
+			if e != nil {
+				log.Fatal(e)
+			}
+			enc := json.NewEncoder(os.Stdout)
+			enc.SetIndent("", "  ")
+			_ = enc.Encode(weeks)
+			return
 		case "replay":
 			if len(os.Args) < 4 || os.Args[2] == "live" {
 				log.Fatal("replay requires an isolated namespace and capture files")
