@@ -141,14 +141,26 @@ The Classmap web map (and the iOS app, in builds that set `ACTIVITY_URL`) can se
 
 Limits: the endpoint has no authentication, so anyone could post made-up ids. `active_installs` is therefore an upper bound on installs, not a count of students. Only `cohort_participants` counts consented students. Reinstalling the app or turning counting off and on creates a new id. Students who never opt in are invisible. Publish weekly totals only.
 
+## Room feedback
+
+Room pages on the web map let a student say a room was easy to find, flag a pin or route that was off, add a short finding tip, or ask for a missing room. None of it is shown to anyone automatically: tips become part of a room guide only after someone checks them on foot and adds them to `data/rooms.json` in the Classmap repo with `"source": "student-tip"`.
+
+- `POST /v1/room-feedback` with `{"place": "<web map place id>", "kind": "easy|unclear|tip|missing", "message": "..."}`. `message` is required for `tip` and `missing`, optional otherwise, at most 280 characters after whitespace is collapsed and control characters are dropped. The table holds the place, kind, message and time received, nothing about the sender.
+- The API accepts at most 20 a minute and 500 a Pacific day, then answers 429. It can't limit by sender because the ingress drops client addresses before the API, which is the point.
+- `transit feedback-report [--all]` prints unreviewed feedback oldest first (everything with `--all`), up to 200 rows, as JSON.
+- `transit feedback-reviewed <id>...` marks rows reviewed. `transit prune`, run daily by the maintenance timer, deletes rows reviewed more than 90 days earlier. Unreviewed rows are kept.
+
+Free text from the public can contain anything. Read it before acting on it, never paste it into the app unchecked, and delete anything personal with `DELETE FROM room_feedback WHERE id=...`.
+
 ### Public ingress
 
 The API stays on 127.0.0.1. The hosted web map (GitHub Pages) reaches it through the `public` compose profile: Caddy on 80/443 with automatic Let's Encrypt TLS for `PUBLIC_HOST`. Only these requests are forwarded:
 
 - `GET /v1/departures` and `GET /v1/feed-status`, for live departures on the web map.
 - `POST`, `DELETE` and `OPTIONS /v1/activity`, for opt-in counting and its browser preflight. A preflight succeeds only from `ALLOWED_ORIGIN`.
+- `POST` and `OPTIONS /v1/room-feedback`, for room feedback (bodies up to 2 KB).
 
-Request bodies are capped at 1 KB, and everything else returns 404, so ops, admin and observations stay private. Caddy writes no access log, and the client address headers are dropped before the API.
+Other request bodies are capped at 1 KB, and everything else returns 404, so ops, admin and observations stay private. Caddy writes no access log, and the client address headers are dropped before the API.
 
 Setup:
 

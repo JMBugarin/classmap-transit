@@ -76,6 +76,38 @@ func main() {
 			if e != nil {
 				log.Fatal(e)
 			}
+			if f, e := s.PruneFeedback(ctx); e != nil {
+				log.Fatal(e)
+			} else if f > 0 {
+				log.Printf("pruned %d reviewed feedback rows", f)
+			}
+			fmt.Println(n)
+			return
+		case "feedback-report":
+			rows, e := s.FeedbackReport(ctx, len(os.Args) > 2 && os.Args[2] == "--all")
+			if e != nil {
+				log.Fatal(e)
+			}
+			enc := json.NewEncoder(os.Stdout)
+			enc.SetIndent("", "  ")
+			_ = enc.Encode(rows)
+			return
+		case "feedback-reviewed":
+			if len(os.Args) < 3 {
+				log.Fatal("usage: feedback-reviewed <id>...")
+			}
+			var ids []int64
+			for _, a := range os.Args[2:] {
+				id, e := strconv.ParseInt(a, 10, 64)
+				if e != nil {
+					log.Fatalf("invalid id %q", a)
+				}
+				ids = append(ids, id)
+			}
+			n, e := s.ReviewFeedback(ctx, ids)
+			if e != nil {
+				log.Fatal(e)
+			}
 			fmt.Println(n)
 			return
 		case "activity-exclude":

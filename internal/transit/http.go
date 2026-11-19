@@ -16,7 +16,7 @@ import (
 	"time"
 )
 
-var Routes = []string{"/healthz", "/readyz", "/v1/feed-status", "/v1/departures", "/v1/observations", "/v1/ops", "/v1/admin/requeue", "/v1/activity"}
+var Routes = []string{"/healthz", "/readyz", "/v1/feed-status", "/v1/departures", "/v1/observations", "/v1/ops", "/v1/admin/requeue", "/v1/activity", "/v1/room-feedback"}
 
 type Departure struct {
 	Trip      string `json:"trip"`
@@ -37,12 +37,13 @@ type entry struct {
 	expires time.Time
 }
 type API struct {
-	Store  *Store
-	Cache  bool
-	Token  string
-	Origin string
-	mu     sync.Mutex
-	cache  map[string]entry
+	Store    *Store
+	Cache    bool
+	Token    string
+	Origin   string
+	mu       sync.Mutex
+	cache    map[string]entry
+	feedback feedbackLimiter
 }
 
 func (s *Store) Status(ctx context.Context) (Status, error) {
@@ -103,6 +104,10 @@ func (a *API) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	if r.URL.Path == "/v1/activity" {
 		a.serveActivity(w, r, fail)
+		return
+	}
+	if r.URL.Path == "/v1/room-feedback" {
+		a.serveFeedback(w, r, fail)
 		return
 	}
 	if r.Method != "GET" {
