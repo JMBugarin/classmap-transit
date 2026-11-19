@@ -12,7 +12,7 @@
 		method POST OPTIONS
 	}
 	@read {
-		path /v1/departures /v1/feed-status
+		path /v1/departures /v1/feed-status /v1/vehicles /v1/alerts
 		method GET
 	}
 	handle @activity {

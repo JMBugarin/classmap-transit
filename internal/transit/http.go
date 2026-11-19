@@ -16,7 +16,7 @@ import (
 	"time"
 )
 
-var Routes = []string{"/healthz", "/readyz", "/v1/feed-status", "/v1/departures", "/v1/observations", "/v1/ops", "/v1/admin/requeue", "/v1/activity", "/v1/room-feedback"}
+var Routes = []string{"/healthz", "/readyz", "/v1/feed-status", "/v1/departures", "/v1/observations", "/v1/ops", "/v1/admin/requeue", "/v1/activity", "/v1/room-feedback", "/v1/vehicles", "/v1/alerts"}
 
 type Departure struct {
 	Trip      string `json:"trip"`
@@ -44,6 +44,7 @@ type API struct {
 	mu       sync.Mutex
 	cache    map[string]entry
 	feedback feedbackLimiter
+	Live     *Live
 }
 
 func (s *Store) Status(ctx context.Context) (Status, error) {
@@ -121,6 +122,20 @@ func (a *API) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		_ = json.NewEncoder(w).Encode(o)
+		return
+	}
+	if r.URL.Path == "/v1/vehicles" || r.URL.Path == "/v1/alerts" {
+		if a.Live == nil {
+			fail(503, "live data unavailable")
+			return
+		}
+		if r.URL.Path == "/v1/vehicles" {
+			st, vs := a.Live.Vehicles()
+			_ = json.NewEncoder(w).Encode(map[string]any{"status": st, "vehicles": vs})
+		} else {
+			st, as := a.Live.Alerts()
+			_ = json.NewEncoder(w).Encode(map[string]any{"status": st, "alerts": as})
+		}
 		return
 	}
 	if r.URL.Path == "/v1/feed-status" {

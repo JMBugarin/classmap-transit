@@ -141,6 +141,15 @@ The Classmap web map (and the iOS app, in builds that set `ACTIVITY_URL`) can se
 
 Limits: the endpoint has no authentication, so anyone could post made-up ids. `active_installs` is therefore an upper bound on installs, not a count of students. Only `cohort_participants` counts consented students. Reinstalling the app or turning counting off and on creates a new id. Students who never opt in are invisible. Publish weekly totals only.
 
+## Live vehicles and alerts
+
+Besides the trip updates it stores, the service polls METRO's vehicle positions and service alerts every 30 s (`LIVE_INTERVAL`, at least 15 s) and keeps only the latest of each in memory. The URLs default to `POLL_URL` with `trips` replaced by `vehicles` and `alerts`; `LIVE_VEHICLES_URL` and `LIVE_ALERTS_URL` override them. A fetch or decode that fails leaves the last good snapshot in place, and its freshness (fresh within 90 s of the feed's own timestamp, then stale) says how old it is.
+
+- `GET /v1/vehicles`: every bus with a position: id, trip and route when it is on one, position, bearing, its own timestamp, the stop it is at or heading to, and METRO's occupancy report (`empty`, `many_seats`, `few_seats`, `standing`, `crushed`, `full`, `not_accepting`). A snapshot taken at 23:35 on 2026-11-18 had 29 vehicles, 10 on trips, all reporting occupancy (26 empty, 3 few seats); check a weekday daytime sample before relying on it.
+- `GET /v1/alerts`: alerts in effect now, with English text when METRO sends translations, and the routes, stops and trips they name.
+
+Nothing about riders is involved; the web map polls these only while a stop page or a trip is open.
+
 ## Room feedback
 
 Room pages on the web map let a student say a room was easy to find, flag a pin or route that was off, add a short finding tip, or ask for a missing room. None of it is shown to anyone automatically: tips become part of a room guide only after someone checks them on foot and adds them to `data/rooms.json` in the Classmap repo with `"source": "student-tip"`.
@@ -156,7 +165,7 @@ Free text from the public can contain anything. Read it before acting on it, nev
 
 The API stays on 127.0.0.1. The hosted web map (GitHub Pages) reaches it through the `public` compose profile: Caddy on 80/443 with automatic Let's Encrypt TLS for `PUBLIC_HOST`. Only these requests are forwarded:
 
-- `GET /v1/departures` and `GET /v1/feed-status`, for live departures on the web map.
+- `GET /v1/departures`, `GET /v1/feed-status`, `GET /v1/vehicles` and `GET /v1/alerts`, for live departures, buses and alerts on the web map.
 - `POST`, `DELETE` and `OPTIONS /v1/activity`, for opt-in counting and its browser preflight. A preflight succeeds only from `ALLOWED_ORIGIN`.
 - `POST` and `OPTIONS /v1/room-feedback`, for room feedback (bodies up to 2 KB).
 

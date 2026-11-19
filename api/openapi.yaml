@@ -81,6 +81,69 @@ paths:
         "204": { description: Deleted }
         "400": { $ref: "#/components/responses/Error" }
         "503": { $ref: "#/components/responses/Error" }
+  /v1/vehicles:
+    get:
+      operationId: vehicles
+      description: Latest METRO vehicle positions, polled every 30 s and kept in memory, with the agency's occupancy report when it sends one (empty, many_seats, few_seats, standing, crushed, full, not_accepting).
+      responses:
+        "200":
+          description: Snapshot
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, vehicles]
+                properties:
+                  status: { $ref: "#/components/schemas/LiveStatus" }
+                  vehicles:
+                    type: array
+                    items:
+                      type: object
+                      required: [id, lat, lon]
+                      properties:
+                        id: { type: string }
+                        label: { type: string }
+                        trip: { type: string }
+                        route: { type: string }
+                        lat: { type: number }
+                        lon: { type: number }
+                        bearing: { type: number }
+                        time: { type: integer, format: int64 }
+                        stop: { type: string }
+                        status: { type: string }
+                        occupancy: { type: string }
+        "503": { $ref: "#/components/responses/Error" }
+  /v1/alerts:
+    get:
+      operationId: alerts
+      description: METRO service alerts in effect now.
+      responses:
+        "200":
+          description: Alerts in effect
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, alerts]
+                properties:
+                  status: { $ref: "#/components/schemas/LiveStatus" }
+                  alerts:
+                    type: array
+                    items:
+                      type: object
+                      required: [id, header]
+                      properties:
+                        id: { type: string }
+                        header: { type: string }
+                        description: { type: string }
+                        url: { type: string }
+                        cause: { type: string }
+                        effect: { type: string }
+                        routes: { type: array, items: { type: string } }
+                        stops: { type: array, items: { type: string } }
+                        trips: { type: array, items: { type: string } }
+                        periods: { type: array, items: { type: array, items: { type: integer, format: int64 } } }
+        "503": { $ref: "#/components/responses/Error" }
   /v1/room-feedback:
     post:
       operationId: recordRoomFeedback
@@ -103,6 +166,13 @@ components:
       description: Error
       content: { application/json: { schema: { type: object, required: [error], properties: { error: { type: string } } } } }
   schemas:
+    LiveStatus:
+      type: object
+      required: [source_time, fetched_at, freshness]
+      properties:
+        source_time: { type: [integer, "null"], format: int64 }
+        fetched_at: { type: [string, "null"], format: date-time }
+        freshness: { type: string, enum: [fresh, stale, unavailable] }
     RoomFeedback:
       type: object
       additionalProperties: false

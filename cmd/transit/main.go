@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -183,6 +184,27 @@ func main() {
 		log.Fatal("WORKERS must be 1..16")
 	}
 	var wg sync.WaitGroup
+	live := transit.NewLive()
+	vehiclesURL, alertsURL := os.Getenv("LIVE_VEHICLES_URL"), os.Getenv("LIVE_ALERTS_URL")
+	if feed := os.Getenv("POLL_URL"); strings.HasSuffix(feed, "/trips") {
+		if vehiclesURL == "" {
+			vehiclesURL = strings.TrimSuffix(feed, "trips") + "vehicles"
+		}
+		if alertsURL == "" {
+			alertsURL = strings.TrimSuffix(feed, "trips") + "alerts"
+		}
+	}
+	if vehiclesURL != "" || alertsURL != "" {
+		every, e := time.ParseDuration(envOr("LIVE_INTERVAL", "30s"))
+		if e != nil || every < 15*time.Second {
+			log.Fatal("LIVE_INTERVAL must be at least 15s")
+		}
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			transit.PollLive(ctx, live, http.DefaultClient, vehiclesURL, alertsURL, every, log.Printf)
+		}()
+	}
 	if feed := os.Getenv("POLL_URL"); feed != "" {
 		every, e := time.ParseDuration(envOr("POLL_INTERVAL", "30s"))
 		if e != nil || every < 30*time.Second {
@@ -202,7 +224,7 @@ func main() {
 	if addr == "" {
 		addr = "127.0.0.1:8080"
 	}
-	srv := &http.Server{Addr: addr, Handler: &transit.API{Store: s, Cache: os.Getenv("RESPONSE_CACHE") == "1", Token: os.Getenv("ADMIN_TOKEN"), Origin: os.Getenv("ALLOWED_ORIGIN")}, ReadHeaderTimeout: 3 * time.Second, ReadTimeout: 5 * time.Second, WriteTimeout: 10 * time.Second, IdleTimeout: 30 * time.Second, MaxHeaderBytes: 16384}
+	srv := &http.Server{Addr: addr, Handler: &transit.API{Store: s, Cache: os.Getenv("RESPONSE_CACHE") == "1", Token: os.Getenv("ADMIN_TOKEN"), Origin: os.Getenv("ALLOWED_ORIGIN"), Live: live}, ReadHeaderTimeout: 3 * time.Second, ReadTimeout: 5 * time.Second, WriteTimeout: 10 * time.Second, IdleTimeout: 30 * time.Second, MaxHeaderBytes: 16384}
 	go func() {
 		<-ctx.Done()
 		c, cancel := context.WithTimeout(context.Background(), 10*time.Second)
