@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
+	"maps"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -193,4 +194,121 @@ func TestSeedBenchRefusesNonBenchDatabase(t *testing.T) {
 	if _, e := s.SeedBench(context.Background(), 10, 1, time.Now()); e == nil || !strings.Contains(e.Error(), "_bench") {
 		t.Fatal(e)
 	}
+}
+
+func TestProcessRealMetroTripsStoresArrivals(t *testing.T) {
+	s, ns := setup(t)
+	ctx := context.Background()
+	raw, e := os.ReadFile("../../fixtures/metro-trips.pb")
+	if e != nil {
+		t.Fatal(e)
+	}
+	m, e := Decode(raw)
+	if e != nil {
+		t.Fatal(e)
+	}
+	at := time.Unix(int64(m.Header.GetTimestamp()), 0)
+	s.Now = func() time.Time { return at }
+	id := process(t, s, ns, raw)
+	var rows, stops int
+	if e = s.DB.QueryRow(ctx, "SELECT count(*),count(DISTINCT stop) FROM observations WHERE generation=$1", id).Scan(&rows, &stops); e != nil {
+		t.Fatal(e)
+	}
+	if rows != 2026 || stops != 476 {
+		t.Fatal(rows, stops)
+	}
+}
+
+func processTripUpdates(t *testing.T, s *Store, ns string, entities ...*gtfs.FeedEntity) int64 {
+	t.Helper()
+	b, err := proto.Marshal(&gtfs.FeedMessage{
+		Header: &gtfs.FeedHeader{GtfsRealtimeVersion: proto.String("2.0"), Timestamp: proto.Uint64(uint64(s.Now().Unix()))},
+		Entity: entities,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	return process(t, s, ns, b)
+}
+
+func TestProcessStopTimeEvents(t *testing.T) {
+	s, ns := setup(t)
+	ctx := context.Background()
+	now := time.Now()
+	s.Now = func() time.Time { return now }
+	ev := func(at int64) *gtfs.TripUpdate_StopTimeEvent {
+		return &gtfs.TripUpdate_StopTimeEvent{Time: proto.Int64(at)}
+	}
+	skipped := gtfs.TripUpdate_StopTimeUpdate_SKIPPED
+	noData := gtfs.TripUpdate_StopTimeUpdate_NO_DATA
+	base := now.Unix()
+	stops := []*gtfs.TripUpdate_StopTimeUpdate{
+		{StopId: proto.String("arrival-only"), Arrival: ev(base + 60)},
+		{StopId: proto.String("both"), Arrival: ev(base + 100), Departure: ev(base + 120)},
+		{StopId: proto.String("skipped"), Arrival: ev(base + 200), Departure: ev(base + 210), ScheduleRelationship: &skipped},
+		{StopId: proto.String("no-data"), Arrival: ev(base + 300), Departure: ev(base + 310), ScheduleRelationship: &noData},
+		{StopId: proto.String("delay-only"), Departure: &gtfs.TripUpdate_StopTimeEvent{Delay: proto.Int32(30)}},
+	}
+	id := processTripUpdates(t, s, ns, &gtfs.FeedEntity{
+		Id:         proto.String("e"),
+		TripUpdate: &gtfs.TripUpdate{Trip: &gtfs.TripDescriptor{TripId: proto.String("t")}, StopTimeUpdate: stops},
+	})
+	rows, e := s.DB.Query(ctx, "SELECT stop,predicted FROM observations WHERE generation=$1 ORDER BY sequence", id)
+	if e != nil {
+		t.Fatal(e)
+	}
+	defer rows.Close()
+	got := map[string]int64{}
+	for rows.Next() {
+		var stop string
+		var at int64
+		if e = rows.Scan(&stop, &at); e != nil {
+			t.Fatal(e)
+		}
+		got[stop] = at
+	}
+	if rows.Err() != nil {
+		t.Fatal(rows.Err())
+	}
+	want := map[string]int64{"arrival-only": base + 60, "both": base + 120}
+	if !maps.Equal(got, want) {
+		t.Fatalf("got %v want %v", got, want)
+	}
+}
+
+func TestDeparturesLimitSkipsPastPredictions(t *testing.T) {
+	s, ns := setup(t)
+	ctx := context.Background()
+	now := time.Now()
+	s.Now = func() time.Time { return now }
+	stop := "limit-past-stop"
+	base := now.Unix()
+	up := func(trip string, at int64) *gtfs.FeedEntity {
+		return &gtfs.FeedEntity{
+			Id: proto.String(trip),
+			TripUpdate: &gtfs.TripUpdate{
+				Trip: &gtfs.TripDescriptor{TripId: proto.String(trip)},
+				StopTimeUpdate: []*gtfs.TripUpdate_StopTimeUpdate{{
+					StopId: proto.String(stop), Arrival: &gtfs.TripUpdate_StopTimeEvent{Time: proto.Int64(at)},
+				}},
+			},
+		}
+	}
+	id := processTripUpdates(t, s, ns, up("past", base-60), up("current", base), up("future", base+300))
+	if _, e := s.DB.Exec(ctx, "INSERT INTO feed_state(ns,feed,generation,source_time,hash) VALUES('live','trips',$1,$2,'test') ON CONFLICT(ns,feed) DO UPDATE SET generation=$1,source_time=$2", id, base); e != nil {
+		t.Fatal(e)
+	}
+	api := &API{Store: s, Cache: true}
+	checkNext := func(trip string) {
+		t.Helper()
+		w := httptest.NewRecorder()
+		api.ServeHTTP(w, httptest.NewRequest("GET", "/v1/departures?stop="+stop+"&limit=1", nil))
+		var x Departures
+		if e := json.Unmarshal(w.Body.Bytes(), &x); e != nil || w.Code != 200 || len(x.Departures) != 1 || x.Departures[0].Trip != trip || x.Departures[0].Kind != "fresh" {
+			t.Fatalf("want next trip %s, got %s", trip, w.Body.String())
+		}
+	}
+	checkNext("current")
+	now = now.Add(time.Second)
+	checkNext("future")
 }
