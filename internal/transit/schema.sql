@@ -25,3 +25,6 @@ INSERT INTO schema_versions VALUES(3) ON CONFLICT DO NOTHING;
 CREATE TABLE IF NOT EXISTS activity_excluded_codes(code text PRIMARY KEY CHECK(code ~ '^[0-9a-f]{8}$'));
 INSERT INTO activity_excluded_codes SELECT left(install::text,8) FROM activity_excluded ON CONFLICT DO NOTHING;
 INSERT INTO schema_versions VALUES(4) ON CONFLICT DO NOTHING;
+CREATE TABLE IF NOT EXISTS room_feedback(id bigserial PRIMARY KEY, received_at timestamptz NOT NULL, place text NOT NULL CHECK(place ~ '^[a-z0-9-]{1,80}$'), kind text NOT NULL CHECK(kind IN ('easy','unclear','tip','missing')), message text CHECK(message IS NULL OR char_length(message) BETWEEN 1 AND 280), reviewed_at timestamptz);
+CREATE INDEX IF NOT EXISTS room_feedback_received ON room_feedback(received_at);
+INSERT INTO schema_versions VALUES(5) ON CONFLICT DO NOTHING;

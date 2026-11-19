@@ -81,6 +81,18 @@ paths:
         "204": { description: Deleted }
         "400": { $ref: "#/components/responses/Error" }
         "503": { $ref: "#/components/responses/Error" }
+  /v1/room-feedback:
+    post:
+      operationId: recordRoomFeedback
+      description: Anonymous feedback on a room page. Stored for review and never published automatically. No IP address, install id, schedule or location is stored; at most 20 per minute and 500 per Pacific day are accepted.
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: "#/components/schemas/RoomFeedback" } } }
+      responses:
+        "204": { description: Recorded }
+        "400": { $ref: "#/components/responses/Error" }
+        "429": { $ref: "#/components/responses/Error" }
+        "503": { $ref: "#/components/responses/Error" }
 components:
   securitySchemes:
     bearer: { type: http, scheme: bearer }
@@ -91,6 +103,14 @@ components:
       description: Error
       content: { application/json: { schema: { type: object, required: [error], properties: { error: { type: string } } } } }
   schemas:
+    RoomFeedback:
+      type: object
+      additionalProperties: false
+      required: [place, kind]
+      properties:
+        place: { type: string, pattern: "^[a-z0-9-]{1,80}$", description: Web map place id of the room or building }
+        kind: { type: string, enum: [easy, unclear, tip, missing], description: "easy: found it without trouble; unclear: the pin or directions were off; tip: a finding tip; missing: a room the map lacks" }
+        message: { type: string, maxLength: 280, description: Required for tip and missing; whitespace is collapsed and control characters dropped }
     Activity:
       type: object
       additionalProperties: false
