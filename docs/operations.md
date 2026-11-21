@@ -90,7 +90,7 @@ A t4g.micro (1 GiB, $0.0084/h) brings this to about $11.75/month, but 1 GiB is t
 
 ## Cloud deployment (D02)
 
-One t4g.small (2 vCPU Graviton, 2 GiB, standard CPU credits) in us-west-2 running Amazon Linux 2023, Docker and this `compose.yaml` from `/opt/classmap-transit`. Root volume 20 GB gp3, encrypted. The security group allows only SSH from the operator's address. The API stays on `127.0.0.1:8080`, so reach it through `ssh -L 8080:127.0.0.1:8080`. There is no public endpoint or TLS yet. The poller fetches the live METRO TripUpdates feed every 60 s (`POLL_INTERVAL=60s`). Secrets live only in the host's `.env` (mode 600).
+One t4g.small (2 vCPU Graviton, 2 GiB, standard CPU credits) in us-west-2 running Amazon Linux 2023, Docker and this `compose.yaml` from `/opt/classmap-transit`. Root volume 20 GB gp3, encrypted. At launch the security group allowed only SSH from the operator's address. Since 2026-11-18 it also allows 80/443 for the Caddy ingress (see [Public ingress](#public-ingress)). The API itself stays on `127.0.0.1:8080`: the ingress forwards only the public routes, and admin and ops endpoints are reachable only through `ssh -L 8080:127.0.0.1:8080`. The poller fetches the live METRO TripUpdates feed every 60 s (`POLL_INTERVAL=60s`). Secrets live only in the host's `.env` (mode 600).
 
 Images are built arm64 on the operator machine and shipped with `docker save classmap-transit:<tag> | gzip | ssh <host> docker load`, then `ops/deploy.sh <tag>` on the host. There's no registry.
 

@@ -55,7 +55,10 @@ Database tests use a real PostgreSQL and skip when `TEST_DATABASE_URL` is unset.
 
 ## Benchmark
 
-Exploratory same-machine k6 comparison of uncached, indexed and cached departures over 1M synthetic observations: [bench/PROTOCOL.md](bench/PROTOCOL.md) and [bench/REPORT.md](bench/REPORT.md). Without the stop index the API saturates at 100 requests/s; with it, every run held 100 requests/s with 0 errors and departures p95 of 2.6–2.7 ms.
+k6 comparison of uncached, indexed and cached departures over 1M synthetic observations, at 100 requests/s for 10 minutes per run.
+
+- **v2, deployed host, load from a separate machine** ([protocol](bench/PROTOCOL-v2.md), [report](bench/REPORT-v2.md)). With the stop index, every run held 100 requests/s with 0 errors and departures p95 of 36.2–36.6 ms. The query plan ran in about 0.3 ms on the host, so nearly all of that is the home-to-us-west-2 network path. Without the index, 70% of requests hit the 5 s statement timeout.
+- **v1, one laptop, exploratory** ([protocol](bench/PROTOCOL.md), [report](bench/REPORT.md)). With the index, departures p95 was 2.57–2.72 ms over loopback. Without it, the API saturated at 100 requests/s.
 
 ## Operations
 
@@ -63,4 +66,4 @@ Image-tagged deploys, rollback, retention, backup/restore and the cost estimate 
 
 ## Scope
 
-Single agency. Deployed on one EC2 t4g.small since 2026-11-17 behind SSH only (no public endpoint), with a measured restore drill in docs/operations.md. No measured uptime, cost or traffic yet. Fixtures are one static zip and one trip-updates snapshot, captured once with no repeated polling of the upstream feed.
+Single agency. Deployed on one EC2 t4g.small since 2026-11-17, with a measured restore drill in docs/operations.md. Since 2026-11-18 a Caddy ingress with automatic TLS serves the routes the Classmap web map needs at `https://32-188-109-110.sslip.io`: departures, feed status, vehicles and alerts, plus the opt-in activity and room-feedback posts. Everything else, including admin, ops and observations, returns 404 there and is reachable only over SSH. No measured uptime, cost or traffic yet. Fixtures are one static zip and one trip-updates snapshot, captured once with no repeated polling of the upstream feed.
