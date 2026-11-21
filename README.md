@@ -57,7 +57,8 @@ Database tests use a real PostgreSQL and skip when `TEST_DATABASE_URL` is unset.
 
 k6 comparison of uncached, indexed and cached departures over 1M synthetic observations, at 100 requests/s for 10 minutes per run.
 
-- **v2, deployed host, load from a separate machine** ([protocol](bench/PROTOCOL-v2.md), [report](bench/REPORT-v2.md)). With the stop index, every run held 100 requests/s with 0 errors and departures p95 of 36.2–36.6 ms. The query plan ran in about 0.3 ms on the host, so nearly all of that is the home-to-us-west-2 network path. Without the index, 70% of requests hit the 5 s statement timeout.
+- **v3, deployed host, load from the same Availability Zone** ([protocol](bench/PROTOCOL-v3.md), [report](bench/REPORT-v3.md)). With the stop index, every run held 100 requests/s with 0 errors and departures p95 of 1.64–1.65 ms, or 1.46–1.50 ms with the response cache. A TCP connect inside the zone takes about 0.3 ms, so almost all of this is the service itself.
+- **v2, deployed host, load from a separate machine** ([protocol](bench/PROTOCOL-v2.md), [report](bench/REPORT-v2.md)). With the stop index, every run held 100 requests/s with 0 errors and departures p95 of 36.2–36.6 ms. The query plan ran in about 0.3 ms on the host, so nearly all of that is the home-to-us-west-2 network path (v3 measured 1.65 ms from inside the zone). Without the index, 70% of requests hit the 5 s statement timeout.
 - **v1, one laptop, exploratory** ([protocol](bench/PROTOCOL.md), [report](bench/REPORT.md)). With the index, departures p95 was 2.57–2.72 ms over loopback. Without it, the API saturated at 100 requests/s.
 
 ## Operations

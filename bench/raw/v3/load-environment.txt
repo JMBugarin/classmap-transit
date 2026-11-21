@@ -1,0 +1,7 @@
+Linux ip-172-31-51-72.us-west-2.compute.internal 6.12.115-140.210.amzn2023.x86_64 #1 SMP PREEMPT_DYNAMIC Wed Nov 11 00:39:58 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux
+2
+               total        used        free      shared  buff/cache   available
+Mem:            3814         190        2980          94         643        3315
+instance-type: c7i-flex.large
+placement/availability-zone: us-west-2d
+local-ipv4: 172.31.51.72
